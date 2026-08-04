@@ -129,5 +129,5 @@ See [`docs/mesh-api.md`](docs/mesh-api.md) for the full mesh/rendering reference
 
 ## License
 
-FranklyLib is released under [CC0 1.0](LICENSE) — public domain. Use it, fork it,
+FranklyLib is released under [BSD 3-Clause](LICENSE) — public domain. Use it, fork it,
 strip it for parts, no attribution required.
