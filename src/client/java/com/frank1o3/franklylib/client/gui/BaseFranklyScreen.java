@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * without copy-pasting the fill/border/title code between them.
  */
 @Environment(EnvType.CLIENT)
-public abstract class BaseScaleScreen extends Screen {
+public abstract class BaseFranklyScreen extends Screen {
 
     private static final int OVERLAY_COLOR = 0x88_000000;
     private static final int PANEL_COLOR = 0xCC_1A1A2E;
@@ -28,7 +28,7 @@ public abstract class BaseScaleScreen extends Screen {
     protected final int panelWidth;
     protected final int panelHeight;
 
-    protected BaseScaleScreen(Component title, @Nullable Screen parent, int panelWidth, int panelHeight) {
+    protected BaseFranklyScreen(Component title, @Nullable Screen parent, int panelWidth, int panelHeight) {
         super(title);
         this.parent = parent;
         this.panelWidth = panelWidth;
