@@ -33,11 +33,16 @@ re-deriving "how do I draw a slider" or "how do I triangulate a sphere" from scr
 
 ## Installation
 
-Add the Modrinth/CurseForge listing as a dependency in your loom project:
+> **Not yet published.** The snippet below will work once a release has actually been
+> pushed through the publish workflow — there's nothing at these coordinates until
+> then.
+
+FranklyLib publishes to its own self-hosted Maven repo via GitHub Pages. Add it as a
+dependency in your loom project:
 
 ```gradle
 repositories {
-    maven { url = 'https://maven.fabricmc.net/' } // if not already present
+    maven { url = 'https://frank1o3.github.io/franklylib/maven/' }
 }
 
 dependencies {
@@ -45,8 +50,23 @@ dependencies {
 }
 ```
 
-(Exact coordinates depend on how the mod is published — update this once it's live on
-Modrinth's Maven.)
+Replace `${franklylib_version}` with an actual released version (matches
+`mod_version` in `gradle.properties` at release time) — check the repo's
+[Releases](https://github.com/frank1o3/franklylib/releases) page for available
+versions.
+
+FranklyLib is also published to [Modrinth](https://modrinth.com/), which hosts its own
+Maven repo per project if you'd rather depend on that instead:
+
+```gradle
+repositories {
+    maven { url = 'https://api.modrinth.com/maven' }
+}
+
+dependencies {
+    modImplementation "maven.modrinth:franklylib:${franklylib_version}"
+}
+```
 
 ## Features
 
@@ -109,5 +129,5 @@ See [`docs/mesh-api.md`](docs/mesh-api.md) for the full mesh/rendering reference
 
 ## License
 
-FranklyLib is released under [BSD 3-Clause](LICENSE) — public domain. Use it, fork it,
+FranklyLib is released under [CC0 1.0](LICENSE) — public domain. Use it, fork it,
 strip it for parts, no attribution required.
