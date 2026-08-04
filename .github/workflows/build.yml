@@ -1,39 +1,269 @@
-name: Publish Maven repo
+name: Build and Release Fabric Mod
 
 on:
-  release:
-    types: [published]
-  workflow_dispatch: {}
+  push:
+    branches:
+      - "**"
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Create a GitHub release and publish to Modrinth"
+        type: boolean
+        default: false
+        required: true
 
 permissions:
   contents: write
 
 jobs:
-  publish:
-    runs-on: ubuntu-latest
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    outputs:
+      jar: ${{ steps.jar.outputs.jar }}
+      version: ${{ steps.version.outputs.version }}
+      game_version: ${{ steps.game_version.outputs.game_version }}
+      java_version: ${{ steps.java_version.outputs.java_version }}
+
     steps:
-      - name: Checkout source
+      - name: Checkout repository
         uses: actions/checkout@v7
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+
+      - name: Read Java version
+        id: java_version
+        shell: bash
+        run: |
+          JAVA_VERSION=$(sed -n 's/^java_version=//p' gradle.properties | head -n1 | tr -d '[:space:]')
+
+          if [ -z "$JAVA_VERSION" ]; then
+            echo "Could not determine Minecraft version."
+            exit 1
+          fi
+
+          echo "Minecraft version: $JAVA_VERSION"
+          echo "java_version=$JAVA_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Read mod version
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(sed -n 's/^mod_version=//p' gradle.properties | head -n1 | tr -d '[:space:]')
+
+          if [ -z "$VERSION" ]; then
+            echo "Could not determine mod version."
+            exit 1
+          fi
+
+          echo "Mod version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Set up JDK 25
         uses: actions/setup-java@v5
         with:
-          java-version: "25"
-          distribution: "temurin"
+          distribution: temurin
+          java-version: ${{ steps.java_version.outputs.java_version }}
+          check-latest: true
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
 
-      - name: Publish to local repo directory
-        run: ./gradlew publish
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
 
-      - name: Deploy to gh-pages
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Validate language files
+        run: python3 scripts/validate_lang.py
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Locate compiled JAR
+        id: jar
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          JAR=$(find build/libs \
+            -type f \
+            -name '*.jar' \
+            ! -name '*-sources.jar' \
+            ! -name '*-dev.jar' \
+            ! -name '*-javadoc.jar' \
+            | head -n1)
+
+          if [ -z "$JAR" ]; then
+            echo "No compiled JAR found."
+            exit 1
+          fi
+
+          echo "Found: $JAR"
+          echo "jar=$JAR" >> "$GITHUB_OUTPUT"
+
+      - name: Read Minecraft version
+        id: game_version
+        shell: bash
+        run: |
+          GAME_VERSION=$(sed -n 's/^minecraft_version=//p' gradle.properties | head -n1 | tr -d '[:space:]')
+
+          if [ -z "$GAME_VERSION" ]; then
+            echo "Could not determine Minecraft version."
+            exit 1
+          fi
+
+          echo "Minecraft version: $GAME_VERSION"
+          echo "game_version=$GAME_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v7
         with:
-          folder: build/repo
-          branch: gh-pages
-          target-folder: maven
-          # `clean: false` so older versions already published to gh-pages aren't
-          # deleted every time — Maven repos are additive, each version needs to
-          # stay resolvable for anyone still depending on it.
-          clean: false
+          name: proportionality-${{ steps.version.outputs.version }}
+          path: |
+            build/libs/*.jar
+            !build/libs/*-sources.jar
+            !build/libs/*-dev.jar
+            !build/libs/*-javadoc.jar
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
+
+  release:
+    name: Release
+    needs: build
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.release == true }}
+
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Download compiled mod
+        uses: actions/download-artifact@v8
+        with:
+          name: proportionality-${{ needs.build.outputs.version }}
+          path: artifacts
+
+      - name: Locate compiled JAR
+        id: jar
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          JAR=$(find artifacts \
+            -type f \
+            -name '*.jar' \
+            ! -name '*-sources.jar' \
+            ! -name '*-dev.jar' \
+            ! -name '*-javadoc.jar' \
+            | head -n1)
+
+          if [ -z "$JAR" ]; then
+            echo "No compiled JAR found."
+            exit 1
+          fi
+
+          echo "Found: $JAR"
+          echo "jar=$JAR" >> "$GITHUB_OUTPUT"
+
+      - name: Check if release already exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "v${{ needs.build.outputs.version }}" >/dev/null 2>&1; then
+            echo "Release v${{ needs.build.outputs.version }} already exists."
+            exit 1
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: v${{ needs.build.outputs.version }}
+          name: Proportionality v${{ needs.build.outputs.version }}
+          generate_release_notes: true
+          files: ${{ steps.jar.outputs.jar }}
+
+  modrinth:
+    name: Publish to Modrinth
+    needs:
+      - build
+      - release
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.release == true }}
+
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Download compiled mod
+        uses: actions/download-artifact@v8
+        with:
+          name: proportionality-${{ needs.build.outputs.version }}
+          path: artifacts
+
+      - name: Locate compiled JAR
+        id: jar
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          JAR=$(find artifacts \
+            -type f \
+            -name '*.jar' \
+            ! -name '*-sources.jar' \
+            ! -name '*-dev.jar' \
+            ! -name '*-javadoc.jar' \
+            | head -n1)
+
+          if [ -z "$JAR" ]; then
+            echo "No compiled JAR found."
+            exit 1
+          fi
+
+          echo "Found: $JAR"
+          echo "jar=$JAR" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch release changelog from GitHub
+        id: changelog
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          # Retrieve the body of the release that the previous job just created.
+          CHANGELOG=$(gh release view "v${{ needs.build.outputs.version }}" \
+            --repo "${{ github.repository }}" \
+            --json body \
+            --jq '.body')
+
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG="See the [GitHub release](https://github.com/${{ github.repository }}/releases/tag/v${{ needs.build.outputs.version }}) for the full changelog."
+          fi
+
+          # Write to a temp file to safely handle multi-line content, then read
+          # it back into an output variable using the heredoc delimiter pattern.
+          echo "$CHANGELOG" > /tmp/changelog.md
+          {
+            echo "changelog<<__EOF__"
+            cat /tmp/changelog.md
+            echo "__EOF__"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Publish to Modrinth
+        uses: cloudnode-pro/modrinth-publish@v2
+        with:
+          token: ${{ secrets.MODRINTH_TOKEN }}
+          project: T3ajKLA0
+          version: ${{ needs.build.outputs.version }}
+          name: Proportionality ${{ needs.build.outputs.version }}
+          changelog: ${{ steps.changelog.outputs.changelog }}
+          loaders: fabric
+          game-versions: ${{ needs.build.outputs.game_version }}
+          files: ${{ steps.jar.outputs.jar }}
+          environment: client_only
