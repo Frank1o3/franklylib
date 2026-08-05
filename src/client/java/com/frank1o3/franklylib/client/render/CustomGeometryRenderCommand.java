@@ -7,6 +7,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.util.ARGB;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 public record CustomGeometryRenderCommand(
         Mesh mesh,
@@ -14,15 +18,15 @@ public record CustomGeometryRenderCommand(
         int light,
         int overlay,
         int color) implements SubmitNodeCollector.CustomGeometryRenderer {
+
     @Override
     public void render(PoseStack.Pose pose, VertexConsumer vertexConsumer) {
         if (mesh == null || mesh.vertices() == null || mesh.indices() == null) {
             return;
         }
-        int alpha = ARGB.alpha(color);
-        int red = ARGB.red(color);
-        int green = ARGB.green(color);
-        int blue = ARGB.blue(color);
+
+        Matrix4f matrix4f = pose.pose();
+        Matrix3f matrix3f = pose.normal();
 
         for (int i = 0; i < mesh.indices().length; i += 3) {
             int i0 = mesh.indices()[i];
@@ -40,20 +44,19 @@ public record CustomGeometryRenderCommand(
 
             Vec3 ab = pb.subtract(pa);
             Vec3 ac = pc.subtract(pa);
-            Vec3 normal = ab.cross(ac).normalize();
-            vertexConsumer.setColor(red, green, blue, alpha);
-            vertexConsumer.setLight(light);
-            vertexConsumer.setOverlay(overlay);
-            vertexConsumer.setNormal(pose, normal.x(), normal.y(), normal.z());
-            submitVertex(pose, vertexConsumer, pa, a.u(), a.v());
-            submitVertex(pose, vertexConsumer, pb, b.u(), b.v());
-            submitVertex(pose, vertexConsumer, pc, c.u(), c.v());
+            Vec3 faceNormal = ab.cross(ac).normalize();
+            Vector3f transformedNormal = new Vector3f(faceNormal.x(), faceNormal.y(), faceNormal.z()).mul(matrix3f);
+
+            submitVertex(vertexConsumer, matrix4f, pa, a.u(), a.v(), transformedNormal);
+            submitVertex(vertexConsumer, matrix4f, pb, b.u(), b.v(), transformedNormal);
+            submitVertex(vertexConsumer, matrix4f, pc, c.u(), c.v(), transformedNormal);
         }
     }
 
-    private static void submitVertex(PoseStack.Pose pose, VertexConsumer vertexConsumer, Vec3 position, float u,
-            float v) {
-        vertexConsumer.addVertex(pose, position.x(), position.y(), position.z());
-        vertexConsumer.setUv(u, v);
+    private void submitVertex(VertexConsumer vertexConsumer, Matrix4f matrix4f, Vec3 position, float u, float v,
+            Vector3f normal) {
+        Vector4f transformed = new Vector4f(position.x(), position.y(), position.z(), 1.0F).mul(matrix4f);
+        vertexConsumer.addVertex(transformed.x(), transformed.y(), transformed.z(), color, u, v, overlay, light,
+                normal.x(), normal.y(), normal.z());
     }
 }
