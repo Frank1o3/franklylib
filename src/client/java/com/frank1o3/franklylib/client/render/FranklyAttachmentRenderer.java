@@ -33,11 +33,11 @@ public final class FranklyAttachmentRenderer {
         poseStack.pushPose();
         ModelPart target = resolvePart(model, attachment.targetPart());
         if (target != null) {
-            poseStack.translate(attachment.localOffset().x(), attachment.localOffset().y(),
-                    attachment.localOffset().z());
-            poseStack.scale(attachment.localScale(), attachment.localScale(), attachment.localScale());
             target.translateAndRotate(poseStack);
         }
+        poseStack.translate(attachment.localOffset().x(), attachment.localOffset().y(),
+                attachment.localOffset().z());
+        poseStack.scale(attachment.localScale(), attachment.localScale(), attachment.localScale());
         Vec3[] deformed = deformer.deform(baseMesh, partialTick);
         renderQueue.submitCustomGeometry(poseStack, renderType,
                 new CustomGeometryRenderCommand(baseMesh, deformed, light, overlay, color));
