@@ -16,7 +16,7 @@ permissions:
 jobs:
   build:
     name: Build
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     outputs:
@@ -130,7 +130,7 @@ jobs:
     needs: build
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.release == true }}
 
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     steps:
@@ -189,7 +189,7 @@ jobs:
       - release
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.release == true }}
 
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     steps:
