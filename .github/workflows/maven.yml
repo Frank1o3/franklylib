@@ -1,8 +1,11 @@
 name: Publish Maven repo
 
 on:
-  release:
-    types: [published]
+  workflow_run:
+    workflows:
+      - Build and Release Fabric Mod
+    types:
+      - completed
   workflow_dispatch: {}
 
 permissions:
