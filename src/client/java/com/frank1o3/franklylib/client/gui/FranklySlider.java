@@ -197,7 +197,7 @@ public final class FranklySlider extends AbstractWidget {
         graphics.fill(getX(), getY(), getX() + width, getY() + height, COLOR_TRACK_BG);
 
         // 2. Filled portion
-        int fillRight = getX() + TRACK_INSET + (int) (normalized * (width - TRACK_INSET));
+        int fillRight = getX() + TRACK_INSET + (int) (normalized * (width - TRACK_INSET * 2));
         graphics.fill(
                 getX() + FILL_V_INSET, getY() + FILL_V_INSET,
                 fillRight - FILL_V_INSET, getY() + height - FILL_V_INSET,

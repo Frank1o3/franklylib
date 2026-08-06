@@ -8,6 +8,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -29,7 +30,6 @@ public class FranklyTextBox extends AbstractWidget {
     private final Consumer<String> onSubmit;
     private String value;
     private int cursor;
-    private boolean focused;
     private int scrollOffset;
 
     private FranklyTextBox(int x, int y, int width, int height, String initialValue, Predicate<String> filter,
@@ -45,6 +45,16 @@ public class FranklyTextBox extends AbstractWidget {
         this.cursor = this.value.length();
     }
 
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value == null ? "" : value;
+        this.cursor = Math.min(cursor, this.value.length());
+        onChanged.accept(this.value);
+    }
+
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         graphics.fill(getX(), getY(), getX() + width, getY() + height, COLOR_BG);
@@ -56,17 +66,23 @@ public class FranklyTextBox extends AbstractWidget {
         Font font = Minecraft.getInstance().font;
         int textX = getX() + 3;
         int textY = getY() + (height - font.lineHeight) / 2;
-        String visible = value.substring(Math.max(0, scrollOffset));
+
+        if (cursor < scrollOffset) {
+            scrollOffset = cursor;
+        }
+
+        String visible = value.substring(Math.max(0, Math.min(scrollOffset, value.length())));
         int availableWidth = width - 6;
         if (font.width(visible) > availableWidth) {
             while (scrollOffset < value.length() && font.width(value.substring(scrollOffset)) > availableWidth) {
                 scrollOffset++;
             }
-            visible = value.substring(scrollOffset);
+            visible = value.substring(Math.min(scrollOffset, value.length()));
         }
+
         graphics.text(font, visible, textX, textY, COLOR_TEXT, false);
 
-        if (focused && (int) (System.currentTimeMillis() / 500) % 2 == 0) {
+        if (isFocused() && (int) (System.currentTimeMillis() / 500) % 2 == 0) {
             int caretX = textX
                     + font.width(visible.substring(0, Math.max(0, Math.min(cursor - scrollOffset, visible.length()))));
             graphics.fill(caretX, textY, caretX + 1, textY + font.lineHeight, COLOR_CURSOR);
@@ -75,14 +91,30 @@ public class FranklyTextBox extends AbstractWidget {
 
     @Override
     public void onClick(MouseButtonEvent event, boolean doubleClick) {
-        focused = true;
-        cursor = value.length();
+        setFocused(true);
+        Font font = Minecraft.getInstance().font;
+        int clickX = (int) (event.x() - (getX() + 3));
+        String visible = value.substring(Math.max(0, Math.min(scrollOffset, value.length())));
+        int relCursor = 0;
+        for (int i = 0; i <= visible.length(); i++) {
+            if (font.width(visible.substring(0, i)) > clickX) {
+                relCursor = Math.max(0, i - 1);
+                break;
+            }
+            relCursor = i;
+        }
+        cursor = Math.min(value.length(), Math.max(0, scrollOffset + relCursor));
     }
 
     @Override
     public boolean keyPressed(KeyEvent event) {
+        if (!isFocused() || !active) {
+            return super.keyPressed(event);
+        }
+
         int key = event.key();
-        if (key == 259) {
+
+        if (key == 259) { // Backspace
             if (cursor > 0) {
                 value = value.substring(0, cursor - 1) + value.substring(cursor);
                 cursor--;
@@ -90,18 +122,34 @@ public class FranklyTextBox extends AbstractWidget {
             }
             return true;
         }
-        if (key == 257) {
+        if (key == 261) { // Delete
+            if (cursor < value.length()) {
+                value = value.substring(0, cursor) + value.substring(cursor + 1);
+                onChanged.accept(value);
+            }
+            return true;
+        }
+        if (key == 257 || key == 335) { // Enter / Keypad Enter
             onSubmit.accept(value);
             return true;
         }
-        if (key == 262) {
+        if (key == 262) { // Right Arrow
             cursor = Math.min(value.length(), cursor + 1);
             return true;
         }
-        if (key == 263) {
+        if (key == 263) { // Left Arrow
             cursor = Math.max(0, cursor - 1);
             return true;
         }
+        if (key == 268) { // Home
+            cursor = 0;
+            return true;
+        }
+        if (key == 269) { // End
+            cursor = value.length();
+            return true;
+        }
+
         char c = (char) key;
         if (c >= 32 && c <= 126) {
             String next = value.substring(0, cursor) + c + value.substring(cursor);
@@ -110,10 +158,32 @@ public class FranklyTextBox extends AbstractWidget {
                     value = next;
                     cursor++;
                     onChanged.accept(value);
+                    return true;
                 }
             }
         }
-        return true;
+
+        return super.keyPressed(event);
+    }
+
+    @Override
+    public boolean charTyped(CharacterEvent event) {
+        if (!isFocused() || !active) {
+            return false;
+        }
+        char c = (char) event.codepoint();
+        if (c >= 32 && c != 127) {
+            String next = value.substring(0, cursor) + c + value.substring(cursor);
+            if (maxLength <= 0 || next.length() <= maxLength) {
+                if (filter == null || filter.test(next)) {
+                    value = next;
+                    cursor++;
+                    onChanged.accept(value);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override
@@ -121,6 +191,7 @@ public class FranklyTextBox extends AbstractWidget {
         output.add(NarratedElementType.TITLE, Component.literal(value));
     }
 
+    @Override
     protected MutableComponent createNarrationMessage() {
         return Component.literal(value);
     }

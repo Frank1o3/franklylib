@@ -38,6 +38,20 @@ public class FranklyDropdown<T> extends AbstractWidget {
     }
 
     @Override
+    public boolean isMouseOver(double mouseX, double mouseY) {
+        if (!isActive()) {
+            return false;
+        }
+        if (expanded) {
+            int optionHeight = Math.max(14, getHeight());
+            int listHeight = Math.min(options.size() * optionHeight, 140);
+            return mouseX >= getX() && mouseX < getRight()
+                    && mouseY >= getY() && mouseY < getY() + getHeight() + listHeight;
+        }
+        return super.isMouseOver(mouseX, mouseY);
+    }
+
+    @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         FranklyButton.builder()
                 .bounds(getX(), getY(), getWidth(), getHeight())
@@ -56,7 +70,10 @@ public class FranklyDropdown<T> extends AbstractWidget {
             for (int i = 0; i < options.size(); i++) {
                 T option = options.get(i);
                 int y = getY() + getHeight() + i * optionHeight;
-                graphics.fill(getX(), y, getX() + getWidth(), y + optionHeight, 0x54_444444);
+                int bg = (mouseX >= getX() && mouseX <= getX() + getWidth() && mouseY >= y && mouseY < y + optionHeight)
+                        ? 0x88_666688
+                        : 0x54_444444;
+                graphics.fill(getX(), y, getX() + getWidth(), y + optionHeight, bg);
                 graphics.text(font, labelMapper.apply(option), getX() + 4, y + 3, 0xFF_FFFFFF, false);
             }
         }
@@ -67,12 +84,12 @@ public class FranklyDropdown<T> extends AbstractWidget {
         double mouseX = event.x();
         double mouseY = event.y();
 
-        // Click landed on an already-open option list -> try to select it.
-        if (expanded && mouseY >= getY() + getHeight()) {
+        // Click landed on an open option item -> select it
+        if (expanded && mouseY >= getBottom()) {
             int optionHeight = Math.max(14, getHeight());
-            int index = (int) ((mouseY - (getY() + getHeight())) / optionHeight);
+            int index = (int) ((mouseY - getBottom()) / optionHeight);
             if (index >= 0 && index < options.size()
-                    && mouseX >= getX() && mouseX <= getX() + getWidth()) {
+                    && mouseX >= getX() && mouseX < getRight()) {
                 current = options.get(index);
                 onSelect.accept(current);
             }
@@ -80,7 +97,7 @@ public class FranklyDropdown<T> extends AbstractWidget {
             return;
         }
 
-        // Click on the main button area -> toggle open/closed.
+        // Click on main button -> toggle dropdown
         expanded = !expanded;
     }
 

@@ -5,6 +5,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,23 @@ public class FranklyTabBar<T> extends AbstractWidget {
         this.current = current;
         this.onSelect = onSelect != null ? onSelect : value -> {
         };
+    }
+
+    @Override
+    public void onClick(MouseButtonEvent event, boolean doubleClick) {
+        int segmentWidth = tabs.isEmpty() ? width : width / tabs.size();
+        for (int i = 0; i < tabs.size(); i++) {
+            int x = getX() + i * segmentWidth;
+            int tabWidth = (i == tabs.size() - 1) ? (getX() + width - x) : segmentWidth;
+            if (event.x() >= x && event.x() < x + tabWidth && event.y() >= getY() && event.y() < getY() + getHeight()) {
+                T tab = tabs.get(i);
+                if (!tab.equals(current)) {
+                    this.current = tab;
+                    this.onSelect.accept(tab);
+                    return;
+                }
+            }
+        }
     }
 
     @Override
