@@ -6,12 +6,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.Resource;
-import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Reader;
@@ -35,30 +35,22 @@ public final class FranklyUiAnimations {
     }
 
     public static void registerReloadListener() {
-        ResourceManagerHelper.get(PackType.CLIENT_RESOURCES)
-                .registerReloadListener(new SimpleSynchronousResourceReloadListener() {
-                    @Override
-                    public Identifier getFabricId() {
-                        return FranklyLib.id("ui_animations");
-                    }
-
-                    @Override
-                    public void onResourceManagerReload(ResourceManager manager) {
-                        Map<Identifier, Definition> loaded = new HashMap<>();
-                        manager.listResources(DIRECTORY, id -> id.getPath().endsWith(".json"))
-                                .forEach((fileId, resource) -> {
-                                    Definition definition = parse(fileId, resource);
-                                    if (definition != null) {
-                                        String path = fileId.getPath().substring(DIRECTORY.length() + 1,
-                                                fileId.getPath().length() - 5);
-                                        loaded.put(Identifier.fromNamespaceAndPath(fileId.getNamespace(), path),
-                                                definition);
-                                    }
-                                });
-                        definitions = Map.copyOf(loaded);
-                        synchronized (INSTANCES) {
-                            INSTANCES.clear();
-                        }
+        ResourceLoader.get(PackType.CLIENT_RESOURCES)
+                .registerReloadListener(FranklyLib.id("ui_animations"), (ResourceManagerReloadListener) manager -> {
+                    Map<Identifier, Definition> loaded = new HashMap<>();
+                    manager.listResources(DIRECTORY, id -> id.getPath().endsWith(".json"))
+                            .forEach((fileId, resource) -> {
+                                Definition definition = parse(fileId, resource);
+                                if (definition != null) {
+                                    String path = fileId.getPath().substring(DIRECTORY.length() + 1,
+                                            fileId.getPath().length() - 5);
+                                    loaded.put(Identifier.fromNamespaceAndPath(fileId.getNamespace(), path),
+                                            definition);
+                                }
+                            });
+                    definitions = Map.copyOf(loaded);
+                    synchronized (INSTANCES) {
+                        INSTANCES.clear();
                     }
                 });
     }
