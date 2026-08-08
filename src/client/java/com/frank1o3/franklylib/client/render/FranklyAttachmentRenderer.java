@@ -37,6 +37,12 @@ public final class FranklyAttachmentRenderer {
         }
         poseStack.translate(attachment.localOffset().x(), attachment.localOffset().y(),
                 attachment.localOffset().z());
+        if (attachment.localRotationEuler() != null && !attachment.localRotationEuler().equals(Vec3.ZERO)) {
+            poseStack.mulPose(new org.joml.Quaternionf().rotationZYX(
+                    attachment.localRotationEuler().z(),
+                    attachment.localRotationEuler().y(),
+                    attachment.localRotationEuler().x()));
+        }
         poseStack.scale(attachment.localScale(), attachment.localScale(), attachment.localScale());
         Vec3[] deformed = deformer.deform(baseMesh, partialTick);
         renderQueue.submitCustomGeometry(poseStack, renderType,
