@@ -46,8 +46,14 @@ public record CustomGeometryRenderCommand(
             Vec3 faceNormal = ab.cross(ac).normalize();
             Vector3f transformedNormal = new Vector3f(faceNormal.x(), faceNormal.y(), faceNormal.z()).mul(matrix3f);
 
+            // Entity render types use QUADS, not a triangle-list primitive.
+            // Submit every triangle as a degenerate quad so the next triangle
+            // always starts at a four-vertex boundary. Sending only three
+            // vertices shifts the following primitive and causes missing faces
+            // plus unrelated UV samples to bleed onto the mesh.
             submitVertex(vertexConsumer, matrix4f, pa, a.u(), a.v(), transformedNormal);
             submitVertex(vertexConsumer, matrix4f, pb, b.u(), b.v(), transformedNormal);
+            submitVertex(vertexConsumer, matrix4f, pc, c.u(), c.v(), transformedNormal);
             submitVertex(vertexConsumer, matrix4f, pc, c.u(), c.v(), transformedNormal);
         }
     }

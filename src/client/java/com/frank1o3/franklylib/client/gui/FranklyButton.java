@@ -8,6 +8,9 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import com.frank1o3.franklylib.client.gui.animation.FranklyUiAnimation;
+import com.frank1o3.franklylib.client.gui.animation.FranklyUiAnimations;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,18 +37,27 @@ public class FranklyButton extends Button {
     private static final int COLOR_BG_DISABLED = 0x54_222222;
     private static final int COLOR_TEXT = 0xFF_FFFFFF;
     private static final int COLOR_TEXT_DISABLED = 0xFF_666666;
+    private final @Nullable Identifier animation;
 
-    private FranklyButton(int x, int y, int width, int height, Component message, OnPress onPress) {
+    private FranklyButton(int x, int y, int width, int height, Component message, OnPress onPress,
+            @Nullable Identifier animation) {
         super(x, y, width, height, message, onPress, DEFAULT_NARRATION);
+        this.animation = animation;
     }
 
     @Override
     protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
+        FranklyUiAnimation frame = FranklyUiAnimations.frame(this, animation, isHoveredOrFocused(), active);
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(getX() + getWidth() / 2f + frame.translateX(), getY() + getHeight() / 2f + frame.translateY());
+        graphics.pose().scale(frame.scale());
+        graphics.pose().translate(-getX() - getWidth() / 2f, -getY() - getHeight() / 2f);
         int bg = !active ? COLOR_BG_DISABLED : isHoveredOrFocused() ? COLOR_BG_HOVER : COLOR_BG;
+        bg = withAlpha(bg, frame.alpha());
         graphics.fill(getX(), getY(), getX() + getWidth(), getY() + getHeight(), bg);
 
         Font font = Minecraft.getInstance().font;
-        int textColor = active ? COLOR_TEXT : COLOR_TEXT_DISABLED;
+        int textColor = withAlpha(active ? COLOR_TEXT : COLOR_TEXT_DISABLED, frame.alpha());
         int left = getX() + 2;
         int right = getX() + getWidth() - 2;
         FranklyGuiUtils.drawFittedText(FranklyGuiUtils.Justify.CENTER, graphics, font, getMessage(),
@@ -54,6 +66,12 @@ public class FranklyButton extends Button {
         if (isHovered()) {
             graphics.requestCursor(active ? CursorTypes.POINTING_HAND : CursorTypes.NOT_ALLOWED);
         }
+        graphics.pose().popMatrix();
+    }
+
+    private static int withAlpha(int color, float alpha) {
+        int baseAlpha = color >>> 24;
+        return (Math.round(baseAlpha * Math.clamp(alpha, 0f, 1f)) << 24) | (color & 0x00FFFFFF);
     }
 
     // =========================================================================
@@ -70,6 +88,7 @@ public class FranklyButton extends Button {
         private @Nullable Component message;
         private @Nullable OnPress onPress;
         private boolean active = true;
+        private @Nullable Identifier animation;
 
         private Builder() {
         }
@@ -97,11 +116,17 @@ public class FranklyButton extends Button {
             return this;
         }
 
+        /** Opts this button into a resource-pack UI animation, e.g. {@code modid:gentle_hover}. */
+        public Builder animation(@Nullable Identifier animation) {
+            this.animation = animation;
+            return this;
+        }
+
         public FranklyButton build() {
             Component msg = message != null ? message : Component.empty();
             OnPress press = onPress != null ? onPress : btn -> {
             };
-            FranklyButton button = new FranklyButton(x, y, width, height, msg, press);
+            FranklyButton button = new FranklyButton(x, y, width, height, msg, press, animation);
             button.active = active;
             return button;
         }
