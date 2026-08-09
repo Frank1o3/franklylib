@@ -12,8 +12,14 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
+
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
+
+import com.frank1o3.franklylib.client.gui.animation.FranklyUiAnimation;
+import com.frank1o3.franklylib.client.gui.animation.FranklyUiAnimations;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -93,6 +99,7 @@ public final class FranklySlider extends AbstractWidget {
     private final Function<Double, Component> formatter;
     private final Consumer<Double> onValueChanged;
     private final Consumer<Double> onValueCommitted;
+    private final @Nullable Identifier animation;
 
     // -------------------------------------------------------------------------
     // Mutable state
@@ -129,6 +136,7 @@ public final class FranklySlider extends AbstractWidget {
         };
         this.onValueCommitted = b.onValueCommitted != null ? b.onValueCommitted : v -> {
         };
+        this.animation = b.animation;
 
         // Set initial normalised position (clamped + snapped).
         setNormalized(toNormalized(snapToStep(Mth.clamp(b.initialValue, min, max))));
@@ -190,33 +198,33 @@ public final class FranklySlider extends AbstractWidget {
         if (!visible) {
             return;
         }
-
         Font font = Minecraft.getInstance().font;
+        FranklyUiAnimation frame = FranklyUiAnimations.beginTransform(graphics, this, animation,
+                isHoveredOrFocused(), active, getX() + width / 2f, getY() + height / 2f);
 
-        // 1. Track background
-        graphics.fill(getX(), getY(), getX() + width, getY() + height, COLOR_TRACK_BG);
+        graphics.fill(getX(), getY(), getX() + width, getY() + height,
+                FranklyUiAnimations.applyAlpha(COLOR_TRACK_BG, frame.alpha()));
 
-        // 2. Filled portion
         int fillRight = getX() + TRACK_INSET + (int) (normalized * (width - TRACK_INSET * 2));
         graphics.fill(
                 getX() + FILL_V_INSET, getY() + FILL_V_INSET,
                 fillRight - FILL_V_INSET, getY() + height - FILL_V_INSET,
-                active ? COLOR_FILL_ACTIVE : COLOR_FILL_DISABLED);
+                FranklyUiAnimations.applyAlpha(active ? COLOR_FILL_ACTIVE : COLOR_FILL_DISABLED, frame.alpha()));
 
-        // 3. Thumb (only when active so the disabled state looks flat)
         if (active) {
             int thumbCx = getX() + TRACK_INSET + (int) (normalized * (width - TRACK_INSET * 2));
             graphics.fill(
                     thumbCx - THUMB_HALF_W, getY() + FILL_V_INSET,
                     thumbCx + THUMB_HALF_W, getY() + height - FILL_V_INSET,
-                    COLOR_THUMB);
+                    FranklyUiAnimations.applyAlpha(COLOR_THUMB, frame.alpha()));
         }
 
-        // 4. Label text centred in the track
-        int textColor = resolveTextColor();
+        int textColor = FranklyUiAnimations.applyAlpha(resolveTextColor(), frame.alpha());
         int textLeft = getX() + TRACK_INSET;
         int textRight = getX() + width - TRACK_INSET;
         drawCentredScrollableText(graphics, font, getMessage(), textLeft, textRight, textColor);
+
+        FranklyUiAnimations.endTransform(graphics);
     }
 
     // =========================================================================
@@ -457,6 +465,8 @@ public final class FranklySlider extends AbstractWidget {
         private double step = 0.01;
         private double initialValue = 0.0;
 
+        private @Nullable Identifier animation;
+
         private Component label;
         private Function<Double, Component> formatter;
 
@@ -559,6 +569,11 @@ public final class FranklySlider extends AbstractWidget {
         /** Constructs the {@link FranklySlider}. */
         public FranklySlider build() {
             return new FranklySlider(this);
+        }
+
+        public Builder animation(@Nullable Identifier animation) {
+            this.animation = animation;
+            return this;
         }
     }
 }

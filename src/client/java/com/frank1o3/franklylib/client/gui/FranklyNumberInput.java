@@ -13,8 +13,14 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
+
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
+
+import com.frank1o3.franklylib.client.gui.animation.FranklyUiAnimation;
+import com.frank1o3.franklylib.client.gui.animation.FranklyUiAnimations;
 
 import java.text.DecimalFormat;
 import java.util.function.Consumer;
@@ -75,6 +81,7 @@ public class FranklyNumberInput extends AbstractWidget {
     private final Function<Double, Component> formatter;
     private final Consumer<Double> onValueChanged;
     private final Consumer<Double> onValueCommitted;
+    private final @Nullable Identifier animation;
 
     // -------------------------------------------------------------------------
     // Mutable state
@@ -103,6 +110,7 @@ public class FranklyNumberInput extends AbstractWidget {
         };
         this.onValueCommitted = b.onValueCommitted != null ? b.onValueCommitted : v -> {
         };
+        this.animation = b.animation;
 
         this.value = Mth.clamp(b.initialValue, minValue, maxValue);
         this.editingText = null;
@@ -153,16 +161,18 @@ public class FranklyNumberInput extends AbstractWidget {
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         Font font = Minecraft.getInstance().font;
+        FranklyUiAnimation frame = FranklyUiAnimations.beginTransform(graphics, this, animation,
+                isHoveredOrFocused(), active, getX() + width / 2f, getY() + height / 2f);
 
-        // Background
         int bg = !active ? 0x54_222222 : isHoveredOrFocused() ? COLOR_BG_HOVER : COLOR_BG;
-        graphics.fill(getX(), getY(), getX() + width, getY() + height, bg);
+        graphics.fill(getX(), getY(), getX() + width, getY() + height,
+                FranklyUiAnimations.applyAlpha(bg, frame.alpha()));
 
-        // Border
-        graphics.fill(getX(), getY(), getX() + width, getY() + 1, COLOR_BORDER);
-        graphics.fill(getX(), getY() + height - 1, getX() + width, getY() + height, COLOR_BORDER);
-        graphics.fill(getX(), getY(), getX() + 1, getY() + height, COLOR_BORDER);
-        graphics.fill(getX() + width - 1, getY(), getX() + width, getY() + height, COLOR_BORDER);
+        int border = FranklyUiAnimations.applyAlpha(COLOR_BORDER, frame.alpha());
+        graphics.fill(getX(), getY(), getX() + width, getY() + 1, border);
+        graphics.fill(getX(), getY() + height - 1, getX() + width, getY() + height, border);
+        graphics.fill(getX(), getY(), getX() + 1, getY() + height, border);
+        graphics.fill(getX() + width - 1, getY(), getX() + width, getY() + height, border);
 
         // Text area (excluding buttons)
         int textLeft = getX() + TEXT_PADDING;
@@ -201,12 +211,13 @@ public class FranklyNumberInput extends AbstractWidget {
         // Plus/minus symbols
         int textColorBtn = active ? 0xFF_FFFFFF : 0xFF_666666;
         String upSymbol = "+";
-        String downSymbol = "−";
+        String downSymbol = "-";
         int symbolYOffset = (btnHeight / 2 - font.lineHeight) / 2;
         graphics.text(font, upSymbol, btnX + (BUTTON_WIDTH - font.width(upSymbol)) / 2,
                 btnY + symbolYOffset, textColorBtn, false);
         graphics.text(font, downSymbol, btnX + (BUTTON_WIDTH - font.width(downSymbol)) / 2,
                 btnY + btnHeight / 2 + symbolYOffset, textColorBtn, false);
+        FranklyUiAnimations.endTransform(graphics);
     }
 
     private boolean isMouseOverButton(int mouseX, int mouseY, int x, int y, int w, int h) {
@@ -519,8 +530,14 @@ public class FranklyNumberInput extends AbstractWidget {
         private Function<Double, Component> formatter;
         private Consumer<Double> onValueChanged;
         private Consumer<Double> onValueCommitted;
+        private @Nullable Identifier animation;
 
         private Builder() {
+        }
+
+        public Builder animation(@Nullable Identifier animation) {
+            this.animation = animation;
+            return this;
         }
 
         public Builder bounds(int x, int y, int width, int height) {

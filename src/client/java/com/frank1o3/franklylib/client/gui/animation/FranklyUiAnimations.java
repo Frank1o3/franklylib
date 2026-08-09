@@ -7,6 +7,7 @@ import com.google.gson.JsonParser;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.Resource;
@@ -121,5 +122,24 @@ public final class FranklyUiAnimations {
     }
 
     private record Instance(Identifier animationId, FranklyUiAnimation from, FranklyUiAnimation to, long startedAt) {
+    }
+
+    public static FranklyUiAnimation beginTransform(GuiGraphicsExtractor graphics, Object owner,
+            @Nullable Identifier animationId, boolean hovered, boolean active, float centerX, float centerY) {
+        FranklyUiAnimation transform = frame(owner, animationId, hovered, active);
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(centerX + transform.translateX(), centerY + transform.translateY());
+        graphics.pose().scale(transform.scale());
+        graphics.pose().translate(-centerX, -centerY);
+        return transform;
+    }
+
+    public static void endTransform(GuiGraphicsExtractor graphics) {
+        graphics.pose().popMatrix();
+    }
+
+    public static int applyAlpha(int color, float alpha) {
+        int baseAlpha = color >>> 24;
+        return (Math.round(baseAlpha * Math.clamp(alpha, 0f, 1f)) << 24) | (color & 0x00FFFFFF);
     }
 }

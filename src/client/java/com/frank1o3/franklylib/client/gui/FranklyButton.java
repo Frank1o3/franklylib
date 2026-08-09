@@ -14,7 +14,8 @@ import com.frank1o3.franklylib.client.gui.animation.FranklyUiAnimations;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A flat-style button matching the look of {@link FranklySlider}, so buttons and
+ * A flat-style button matching the look of {@link FranklySlider}, so buttons
+ * and
  * sliders in the same panel feel like one cohesive widget set instead of
  * mixing vanilla's beveled button texture with a custom slider.
  *
@@ -47,17 +48,15 @@ public class FranklyButton extends Button {
 
     @Override
     protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
-        FranklyUiAnimation frame = FranklyUiAnimations.frame(this, animation, isHoveredOrFocused(), active);
-        graphics.pose().pushMatrix();
-        graphics.pose().translate(getX() + getWidth() / 2f + frame.translateX(), getY() + getHeight() / 2f + frame.translateY());
-        graphics.pose().scale(frame.scale());
-        graphics.pose().translate(-getX() - getWidth() / 2f, -getY() - getHeight() / 2f);
+        FranklyUiAnimation frame = FranklyUiAnimations.beginTransform(graphics, this, animation,
+                isHoveredOrFocused(), active, getX() + getWidth() / 2f, getY() + getHeight() / 2f);
+
         int bg = !active ? COLOR_BG_DISABLED : isHoveredOrFocused() ? COLOR_BG_HOVER : COLOR_BG;
-        bg = withAlpha(bg, frame.alpha());
+        bg = FranklyUiAnimations.applyAlpha(bg, frame.alpha());
         graphics.fill(getX(), getY(), getX() + getWidth(), getY() + getHeight(), bg);
 
         Font font = Minecraft.getInstance().font;
-        int textColor = withAlpha(active ? COLOR_TEXT : COLOR_TEXT_DISABLED, frame.alpha());
+        int textColor = FranklyUiAnimations.applyAlpha(active ? COLOR_TEXT : COLOR_TEXT_DISABLED, frame.alpha());
         int left = getX() + 2;
         int right = getX() + getWidth() - 2;
         FranklyGuiUtils.drawFittedText(FranklyGuiUtils.Justify.CENTER, graphics, font, getMessage(),
@@ -66,12 +65,7 @@ public class FranklyButton extends Button {
         if (isHovered()) {
             graphics.requestCursor(active ? CursorTypes.POINTING_HAND : CursorTypes.NOT_ALLOWED);
         }
-        graphics.pose().popMatrix();
-    }
-
-    private static int withAlpha(int color, float alpha) {
-        int baseAlpha = color >>> 24;
-        return (Math.round(baseAlpha * Math.clamp(alpha, 0f, 1f)) << 24) | (color & 0x00FFFFFF);
+        FranklyUiAnimations.endTransform(graphics);
     }
 
     // =========================================================================
@@ -116,7 +110,10 @@ public class FranklyButton extends Button {
             return this;
         }
 
-        /** Opts this button into a resource-pack UI animation, e.g. {@code modid:gentle_hover}. */
+        /**
+         * Opts this button into a resource-pack UI animation, e.g.
+         * {@code modid:gentle_hover}.
+         */
         public Builder animation(@Nullable Identifier animation) {
             this.animation = animation;
             return this;
