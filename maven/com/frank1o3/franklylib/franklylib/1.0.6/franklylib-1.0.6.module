@@ -1,0 +1,96 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.frank1o3.franklylib",
+    "module": "franklylib",
+    "version": "1.0.6",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.5.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 25,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "franklylib-1.0.6.jar",
+          "url": "franklylib-1.0.6.jar",
+          "size": 174489,
+          "sha512": "c1bc006f77608d862a4e6094a64bfc9abea65e2f68db39b6c9f2913e849741f3eaa8cd1ff0af7a1e8e201d8cd86215739c76a0b4b0f172387a4beac235f6f632",
+          "sha256": "d8dc7edd25bccf5018feb4b7b2088a7f6f5b7c983fae3c0511e9021c291301a5",
+          "sha1": "8d83c83d4392a4065a9b40afb2d4cecf00492200",
+          "md5": "1f3f4b01d3fbb88ff42300a50754a56e"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 25,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "net.fabricmc",
+          "module": "fabric-loader",
+          "version": {
+            "requires": "0.19.3"
+          }
+        },
+        {
+          "group": "net.fabricmc.fabric-api",
+          "module": "fabric-api",
+          "version": {
+            "requires": "0.156.0+26.2"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "franklylib-1.0.6.jar",
+          "url": "franklylib-1.0.6.jar",
+          "size": 174489,
+          "sha512": "c1bc006f77608d862a4e6094a64bfc9abea65e2f68db39b6c9f2913e849741f3eaa8cd1ff0af7a1e8e201d8cd86215739c76a0b4b0f172387a4beac235f6f632",
+          "sha256": "d8dc7edd25bccf5018feb4b7b2088a7f6f5b7c983fae3c0511e9021c291301a5",
+          "sha1": "8d83c83d4392a4065a9b40afb2d4cecf00492200",
+          "md5": "1f3f4b01d3fbb88ff42300a50754a56e"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "franklylib-1.0.6-sources.jar",
+          "url": "franklylib-1.0.6-sources.jar",
+          "size": 132266,
+          "sha512": "c16aa4224e2d1b0ad19d221edad3d0aed6319908903e985f0027c79b8c60facdc28437a65d0f2f0607d9048d71e32335aed869307643df63e4932e6e4e28b1b8",
+          "sha256": "b30f5e952aa90213cb56b964dc31192f6958e174b3d6df8554525acc3d6831b3",
+          "sha1": "c1574f193591a9006724c3c3edebff987983c30a",
+          "md5": "3bc869c8d7640d49f83a6246b4fb4324"
+        }
+      ]
+    }
+  ]
+}
