@@ -21,6 +21,8 @@ import org.lwjgl.glfw.GLFW;
 
 import com.frank1o3.franklylib.client.gui.animation.FranklyUiAnimation;
 import com.frank1o3.franklylib.client.gui.animation.FranklyUiAnimations;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyle;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyles;
 
 import java.text.DecimalFormat;
 import java.util.function.Consumer;
@@ -82,6 +84,7 @@ public class FranklyNumberInput extends AbstractWidget {
     private final Consumer<Double> onValueChanged;
     private final Consumer<Double> onValueCommitted;
     private final @Nullable Identifier animation;
+    private final @Nullable Identifier style;
 
     // -------------------------------------------------------------------------
     // Mutable state
@@ -111,6 +114,7 @@ public class FranklyNumberInput extends AbstractWidget {
         this.onValueCommitted = b.onValueCommitted != null ? b.onValueCommitted : v -> {
         };
         this.animation = b.animation;
+        this.style = b.style;
 
         this.value = Mth.clamp(b.initialValue, minValue, maxValue);
         this.editingText = null;
@@ -164,23 +168,18 @@ public class FranklyNumberInput extends AbstractWidget {
         FranklyUiAnimation frame = FranklyUiAnimations.beginTransform(graphics, this, animation,
                 isHoveredOrFocused(), active, getX() + width / 2f, getY() + height / 2f);
 
-        int bg = !active ? 0x54_222222 : isHoveredOrFocused() ? COLOR_BG_HOVER : COLOR_BG;
-        graphics.fill(getX(), getY(), getX() + width, getY() + height,
-                FranklyUiAnimations.applyAlpha(bg, frame.alpha()));
-
-        int border = FranklyUiAnimations.applyAlpha(COLOR_BORDER, frame.alpha());
-        graphics.fill(getX(), getY(), getX() + width, getY() + 1, border);
-        graphics.fill(getX(), getY() + height - 1, getX() + width, getY() + height, border);
-        graphics.fill(getX(), getY(), getX() + 1, getY() + height, border);
-        graphics.fill(getX() + width - 1, getY(), getX() + width, getY() + height, border);
+        FranklyUiStyle uiStyle = FranklyUiStyles.resolve(style,
+                new FranklyUiStyle(COLOR_BG, COLOR_BG_HOVER, 0x54222222, COLOR_BORDER, COLOR_TEXT,
+                        COLOR_TEXT_DISABLED, COLOR_CURSOR, TEXT_PADDING, FranklyUiStyle.BorderType.SQUARE, 0, 1));
+        uiStyle.withAlpha(frame.alpha()).drawBox(graphics, getX(), getY(), width, height, isHoveredOrFocused(), active);
 
         // Text area (excluding buttons)
-        int textLeft = getX() + TEXT_PADDING;
+        int textLeft = getX() + uiStyle.padding();
         int textRight = getX() + width - BUTTON_WIDTH - 2;
         int textY = getY() + (height - font.lineHeight) / 2;
 
         String displayText = (isFocused() && editingText != null) ? editingText : getFormattedValue();
-        int textColor = active ? COLOR_TEXT : COLOR_TEXT_DISABLED;
+        int textColor = uiStyle.text(active);
 
         // Scissor to keep text within the text area
         graphics.enableScissor(textLeft, getY(), textRight, getY() + height);
@@ -190,7 +189,7 @@ public class FranklyNumberInput extends AbstractWidget {
         // Cursor (only when focused and editing)
         if (isFocused() && editingText != null && (int) (System.currentTimeMillis() / 500) % 2 == 0) {
             int caretX = textLeft + font.width(displayText.substring(0, Math.min(cursorPos, displayText.length())));
-            graphics.fill(caretX, textY, caretX + 1, textY + font.lineHeight, COLOR_CURSOR);
+            graphics.fill(caretX, textY, caretX + 1, textY + font.lineHeight, uiStyle.accentColor());
         }
 
         // Up/down buttons
@@ -531,12 +530,18 @@ public class FranklyNumberInput extends AbstractWidget {
         private Consumer<Double> onValueChanged;
         private Consumer<Double> onValueCommitted;
         private @Nullable Identifier animation;
+        private @Nullable Identifier style;
 
         private Builder() {
         }
 
         public Builder animation(@Nullable Identifier animation) {
             this.animation = animation;
+            return this;
+        }
+
+        public Builder style(@Nullable Identifier style) {
+            this.style = style;
             return this;
         }
 

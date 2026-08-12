@@ -5,6 +5,9 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyle;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyles;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,12 +30,18 @@ public abstract class BaseFranklyScreen extends Screen {
     protected final @Nullable Screen parent;
     protected final int panelWidth;
     protected final int panelHeight;
+    private @Nullable Identifier style;
 
     protected BaseFranklyScreen(Component title, @Nullable Screen parent, int panelWidth, int panelHeight) {
         super(title);
         this.parent = parent;
         this.panelWidth = panelWidth;
         this.panelHeight = panelHeight;
+    }
+
+    /** Applies a resource-pack style to this screen's panel. Call from the subclass constructor. */
+    protected final void setUiStyle(@Nullable Identifier style) {
+        this.style = style;
     }
 
     /**
@@ -49,16 +58,18 @@ public abstract class BaseFranklyScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        FranklyUiStyle uiStyle = FranklyUiStyles.resolve(style,
+                new FranklyUiStyle(PANEL_COLOR, PANEL_COLOR, PANEL_COLOR, BORDER_COLOR, TITLE_COLOR, TITLE_COLOR,
+                        TITLE_COLOR, 8, FranklyUiStyle.BorderType.SQUARE, 0, 1));
         graphics.fill(0, 0, width, height, OVERLAY_COLOR);
 
         int px = panelX();
         int py = panelY();
-        graphics.fill(px, py, px + panelWidth, py + panelHeight, PANEL_COLOR);
-        drawPanelBorder(graphics, px, py);
+        uiStyle.drawBox(graphics, px, py, panelWidth, panelHeight, false, true);
 
         Component title = getTitle();
-        int titleY = py + 8;
-        graphics.text(font, title, width / 2 - font.width(title) / 2, titleY, TITLE_COLOR, false);
+        int titleY = py + uiStyle.padding();
+        graphics.text(font, title, width / 2 - font.width(title) / 2, titleY, uiStyle.textColor(), false);
 
         // Subclasses can draw extra content (previews, labels) before widgets.
         renderPanelContent(graphics, px, py, mouseX, mouseY, delta);
@@ -72,13 +83,6 @@ public abstract class BaseFranklyScreen extends Screen {
      */
     protected void renderPanelContent(GuiGraphicsExtractor graphics, int panelX, int panelY,
             int mouseX, int mouseY, float delta) {
-    }
-
-    private void drawPanelBorder(GuiGraphicsExtractor graphics, int x, int y) {
-        graphics.fill(x, y, x + panelWidth, y + 1, BORDER_COLOR);
-        graphics.fill(x, y + panelHeight - 1, x + panelWidth, y + panelHeight, BORDER_COLOR);
-        graphics.fill(x, y, x + 1, y + panelHeight, BORDER_COLOR);
-        graphics.fill(x + panelWidth - 1, y, x + panelWidth, y + panelHeight, BORDER_COLOR);
     }
 
     @Override

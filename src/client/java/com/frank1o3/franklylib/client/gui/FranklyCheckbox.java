@@ -12,6 +12,9 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.Identifier;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyle;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyles;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
@@ -28,14 +31,16 @@ public class FranklyCheckbox extends AbstractWidget {
     private final Component label;
     private final Consumer<Boolean> onToggle;
     private boolean checked;
+    private final @Nullable Identifier style;
 
     private FranklyCheckbox(int x, int y, int width, int height, Component label, boolean checked,
-            Consumer<Boolean> onToggle) {
+            Consumer<Boolean> onToggle, @Nullable Identifier style) {
         super(x, y, width, height, Component.empty());
         this.label = label;
         this.checked = checked;
         this.onToggle = onToggle != null ? onToggle : value -> {
         };
+        this.style = style;
     }
 
     public boolean isChecked() {
@@ -48,19 +53,17 @@ public class FranklyCheckbox extends AbstractWidget {
 
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-        int bg = !active ? COLOR_BG_DISABLED : isHoveredOrFocused() ? COLOR_BG_HOVER : COLOR_BG;
-        graphics.fill(getX(), getY(), getX() + width, getY() + height, bg);
-        graphics.fill(getX(), getY(), getX() + width, getY() + 1, COLOR_BORDER);
-        graphics.fill(getX(), getY() + height - 1, getX() + width, getY() + height, COLOR_BORDER);
-        graphics.fill(getX(), getY(), getX() + 1, getY() + height, COLOR_BORDER);
-        graphics.fill(getX() + width - 1, getY(), getX() + width, getY() + height, COLOR_BORDER);
+        FranklyUiStyle uiStyle = FranklyUiStyles.resolve(style,
+                new FranklyUiStyle(COLOR_BG, COLOR_BG_HOVER, COLOR_BG_DISABLED, COLOR_BORDER, COLOR_TEXT,
+                        COLOR_TEXT_DISABLED, 0xFF66CC66, 2, FranklyUiStyle.BorderType.SQUARE, 0, 1));
+        uiStyle.drawBox(graphics, getX(), getY(), width, height, isHoveredOrFocused(), active);
 
         if (checked) {
-            graphics.fill(getX() + 2, getY() + 2, getX() + width - 2, getY() + height - 2, 0xFF_66CC66);
+            graphics.fill(getX() + uiStyle.padding(), getY() + uiStyle.padding(), getX() + width - uiStyle.padding(), getY() + height - uiStyle.padding(), uiStyle.accentColor());
         }
 
         Font font = Minecraft.getInstance().font;
-        int textColor = active ? COLOR_TEXT : COLOR_TEXT_DISABLED;
+        int textColor = uiStyle.text(active);
         graphics.text(font, label, getX() + width + 6, getY() + (height - font.lineHeight) / 2, textColor, false);
     }
 
@@ -105,6 +108,7 @@ public class FranklyCheckbox extends AbstractWidget {
         private Component label = Component.empty();
         private boolean checked;
         private @Nullable Consumer<Boolean> onToggle;
+        private @Nullable Identifier style;
 
         public Builder bounds(int x, int y, int width, int height) {
             this.x = x;
@@ -129,8 +133,13 @@ public class FranklyCheckbox extends AbstractWidget {
             return this;
         }
 
+        public Builder style(@Nullable Identifier style) {
+            this.style = style;
+            return this;
+        }
+
         public FranklyCheckbox build() {
-            return new FranklyCheckbox(x, y, width, height, label, checked, onToggle);
+            return new FranklyCheckbox(x, y, width, height, label, checked, onToggle, style);
         }
     }
 }

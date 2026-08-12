@@ -20,6 +20,8 @@ import org.lwjgl.glfw.GLFW;
 
 import com.frank1o3.franklylib.client.gui.animation.FranklyUiAnimation;
 import com.frank1o3.franklylib.client.gui.animation.FranklyUiAnimations;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyle;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyles;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -100,6 +102,7 @@ public final class FranklySlider extends AbstractWidget {
     private final Consumer<Double> onValueChanged;
     private final Consumer<Double> onValueCommitted;
     private final @Nullable Identifier animation;
+    private final @Nullable Identifier style;
 
     // -------------------------------------------------------------------------
     // Mutable state
@@ -137,6 +140,7 @@ public final class FranklySlider extends AbstractWidget {
         this.onValueCommitted = b.onValueCommitted != null ? b.onValueCommitted : v -> {
         };
         this.animation = b.animation;
+        this.style = b.style;
 
         // Set initial normalised position (clamped + snapped).
         setNormalized(toNormalized(snapToStep(Mth.clamp(b.initialValue, min, max))));
@@ -202,14 +206,17 @@ public final class FranklySlider extends AbstractWidget {
         FranklyUiAnimation frame = FranklyUiAnimations.beginTransform(graphics, this, animation,
                 isHoveredOrFocused(), active, getX() + width / 2f, getY() + height / 2f);
 
-        graphics.fill(getX(), getY(), getX() + width, getY() + height,
-                FranklyUiAnimations.applyAlpha(COLOR_TRACK_BG, frame.alpha()));
+        FranklyUiStyle uiStyle = FranklyUiStyles.resolve(style,
+                new FranklyUiStyle(COLOR_TRACK_BG, COLOR_TRACK_BG, COLOR_TRACK_BG, 0,
+                        COLOR_TEXT_NORMAL, COLOR_TEXT_DISABLED, COLOR_FILL_ACTIVE, TRACK_INSET,
+                        FranklyUiStyle.BorderType.NONE, 0, 0));
+        uiStyle.withAlpha(frame.alpha()).drawBox(graphics, getX(), getY(), width, height, isHoveredOrFocused(), active);
 
         int fillRight = getX() + TRACK_INSET + (int) (normalized * (width - TRACK_INSET * 2));
         graphics.fill(
                 getX() + FILL_V_INSET, getY() + FILL_V_INSET,
                 fillRight - FILL_V_INSET, getY() + height - FILL_V_INSET,
-                FranklyUiAnimations.applyAlpha(active ? COLOR_FILL_ACTIVE : COLOR_FILL_DISABLED, frame.alpha()));
+                FranklyUiAnimations.applyAlpha(active ? uiStyle.accentColor() : COLOR_FILL_DISABLED, frame.alpha()));
 
         if (active) {
             int thumbCx = getX() + TRACK_INSET + (int) (normalized * (width - TRACK_INSET * 2));
@@ -219,9 +226,9 @@ public final class FranklySlider extends AbstractWidget {
                     FranklyUiAnimations.applyAlpha(COLOR_THUMB, frame.alpha()));
         }
 
-        int textColor = FranklyUiAnimations.applyAlpha(resolveTextColor(), frame.alpha());
-        int textLeft = getX() + TRACK_INSET;
-        int textRight = getX() + width - TRACK_INSET;
+        int textColor = FranklyUiAnimations.applyAlpha(active ? uiStyle.textColor() : uiStyle.disabledTextColor(), frame.alpha());
+        int textLeft = getX() + uiStyle.padding();
+        int textRight = getX() + width - uiStyle.padding();
         drawCentredScrollableText(graphics, font, getMessage(), textLeft, textRight, textColor);
 
         FranklyUiAnimations.endTransform(graphics);
@@ -466,6 +473,7 @@ public final class FranklySlider extends AbstractWidget {
         private double initialValue = 0.0;
 
         private @Nullable Identifier animation;
+        private @Nullable Identifier style;
 
         private Component label;
         private Function<Double, Component> formatter;
@@ -573,6 +581,12 @@ public final class FranklySlider extends AbstractWidget {
 
         public Builder animation(@Nullable Identifier animation) {
             this.animation = animation;
+            return this;
+        }
+
+        /** Applies a resource-pack style, e.g. {@code modid:settings_slider}. */
+        public Builder style(@Nullable Identifier style) {
+            this.style = style;
             return this;
         }
     }

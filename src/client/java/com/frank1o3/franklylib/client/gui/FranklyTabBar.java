@@ -7,6 +7,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -21,15 +22,17 @@ public class FranklyTabBar<T> extends AbstractWidget {
     private final Consumer<T> onSelect;
     private final List<FranklyButton> buttons = new ArrayList<>();
     private T current;
+    private final @Nullable Identifier style;
 
     private FranklyTabBar(int x, int y, int width, int height, List<T> tabs, Function<T, Component> labelMapper,
-            T current, Consumer<T> onSelect) {
+            T current, Consumer<T> onSelect, @Nullable Identifier style) {
         super(x, y, width, height, Component.empty());
         this.tabs = new ArrayList<>(tabs);
         this.labelMapper = labelMapper != null ? labelMapper : tab -> Component.literal(String.valueOf(tab));
         this.current = current;
         this.onSelect = onSelect != null ? onSelect : value -> {
         };
+        this.style = style;
     }
 
     @Override
@@ -65,6 +68,7 @@ public class FranklyTabBar<T> extends AbstractWidget {
                         current = tab;
                         onSelect.accept(tab);
                     })
+                    .style(style)
                     .build();
             button.setX(x);
             button.setY(getY());
@@ -92,6 +96,7 @@ public class FranklyTabBar<T> extends AbstractWidget {
         private @Nullable Function<T, Component> labelMapper;
         private T current;
         private @Nullable Consumer<T> onSelect;
+        private @Nullable Identifier style;
 
         public Builder<T> bounds(int x, int y, int width, int height) {
             this.x = x;
@@ -121,8 +126,13 @@ public class FranklyTabBar<T> extends AbstractWidget {
             return this;
         }
 
+        public Builder<T> style(@Nullable Identifier style) {
+            this.style = style;
+            return this;
+        }
+
         public FranklyTabBar<T> build() {
-            return new FranklyTabBar<>(x, y, width, height, tabs, labelMapper, current, onSelect);
+            return new FranklyTabBar<>(x, y, width, height, tabs, labelMapper, current, onSelect, style);
         }
     }
 }

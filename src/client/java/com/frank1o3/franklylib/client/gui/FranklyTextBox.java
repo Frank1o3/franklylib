@@ -13,6 +13,9 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.Identifier;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyle;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyles;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
@@ -31,9 +34,10 @@ public class FranklyTextBox extends AbstractWidget {
     private String value;
     private int cursor;
     private int scrollOffset;
+    private final @Nullable Identifier style;
 
     private FranklyTextBox(int x, int y, int width, int height, String initialValue, Predicate<String> filter,
-            int maxLength, Consumer<String> onChanged, Consumer<String> onSubmit) {
+            int maxLength, Consumer<String> onChanged, Consumer<String> onSubmit, @Nullable Identifier style) {
         super(x, y, width, height, Component.empty());
         this.value = initialValue == null ? "" : initialValue;
         this.filter = filter;
@@ -43,6 +47,7 @@ public class FranklyTextBox extends AbstractWidget {
         this.onSubmit = onSubmit != null ? onSubmit : s -> {
         };
         this.cursor = this.value.length();
+        this.style = style;
     }
 
     public String getValue() {
@@ -57,14 +62,13 @@ public class FranklyTextBox extends AbstractWidget {
 
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-        graphics.fill(getX(), getY(), getX() + width, getY() + height, COLOR_BG);
-        graphics.fill(getX(), getY(), getX() + width, getY() + 1, COLOR_BORDER);
-        graphics.fill(getX(), getY() + height - 1, getX() + width, getY() + height, COLOR_BORDER);
-        graphics.fill(getX(), getY(), getX() + 1, getY() + height, COLOR_BORDER);
-        graphics.fill(getX() + width - 1, getY(), getX() + width, getY() + height, COLOR_BORDER);
+        FranklyUiStyle uiStyle = FranklyUiStyles.resolve(style,
+                new FranklyUiStyle(COLOR_BG, COLOR_BG, COLOR_BG, COLOR_BORDER, COLOR_TEXT, COLOR_TEXT, COLOR_CURSOR, 3,
+                        FranklyUiStyle.BorderType.SQUARE, 0, 1));
+        uiStyle.drawBox(graphics, getX(), getY(), width, height, isHoveredOrFocused(), active);
 
         Font font = Minecraft.getInstance().font;
-        int textX = getX() + 3;
+        int textX = getX() + uiStyle.padding();
         int textY = getY() + (height - font.lineHeight) / 2;
 
         if (cursor < scrollOffset) {
@@ -72,7 +76,7 @@ public class FranklyTextBox extends AbstractWidget {
         }
 
         String visible = value.substring(Math.max(0, Math.min(scrollOffset, value.length())));
-        int availableWidth = width - 6;
+        int availableWidth = width - uiStyle.padding() * 2;
         if (font.width(visible) > availableWidth) {
             while (scrollOffset < value.length() && font.width(value.substring(scrollOffset)) > availableWidth) {
                 scrollOffset++;
@@ -80,12 +84,12 @@ public class FranklyTextBox extends AbstractWidget {
             visible = value.substring(Math.min(scrollOffset, value.length()));
         }
 
-        graphics.text(font, visible, textX, textY, COLOR_TEXT, false);
+        graphics.text(font, visible, textX, textY, uiStyle.text(active), false);
 
         if (isFocused() && (int) (System.currentTimeMillis() / 500) % 2 == 0) {
             int caretX = textX
                     + font.width(visible.substring(0, Math.max(0, Math.min(cursor - scrollOffset, visible.length()))));
-            graphics.fill(caretX, textY, caretX + 1, textY + font.lineHeight, COLOR_CURSOR);
+            graphics.fill(caretX, textY, caretX + 1, textY + font.lineHeight, uiStyle.accentColor());
         }
     }
 
@@ -210,6 +214,7 @@ public class FranklyTextBox extends AbstractWidget {
         private int maxLength = -1;
         private @Nullable Consumer<String> onChanged;
         private @Nullable Consumer<String> onSubmit;
+        private @Nullable Identifier style;
 
         public Builder bounds(int x, int y, int width, int height) {
             this.x = x;
@@ -244,8 +249,13 @@ public class FranklyTextBox extends AbstractWidget {
             return this;
         }
 
+        public Builder style(@Nullable Identifier style) {
+            this.style = style;
+            return this;
+        }
+
         public FranklyTextBox build() {
-            return new FranklyTextBox(x, y, width, height, initialValue, filter, maxLength, onChanged, onSubmit);
+            return new FranklyTextBox(x, y, width, height, initialValue, filter, maxLength, onChanged, onSubmit, style);
         }
     }
 }

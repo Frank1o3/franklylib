@@ -9,7 +9,10 @@ import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyle;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyles;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -41,6 +44,7 @@ public class FranklyScrollPanel extends AbstractWidget {
     private int contentHeight;
     private double scrollAmount;
     private @Nullable AbstractWidget focused;
+    private @Nullable Identifier style;
 
     private FranklyScrollPanel(int x, int y, int width, int height) {
         super(x, y, width, height, Component.empty());
@@ -48,6 +52,12 @@ public class FranklyScrollPanel extends AbstractWidget {
 
     public static FranklyScrollPanel create(int x, int y, int width, int height) {
         return new FranklyScrollPanel(x, y, width, height);
+    }
+
+    /** Applies a resource-pack style to the panel background. */
+    public FranklyScrollPanel style(@Nullable Identifier style) {
+        this.style = style;
+        return this;
     }
 
     public <T extends AbstractWidget> T addChild(T widget, int offsetY) {
@@ -83,7 +93,10 @@ public class FranklyScrollPanel extends AbstractWidget {
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         layoutChildren();
-        graphics.fill(getX(), getY(), getX() + width, getY() + height, COLOR_BG);
+        FranklyUiStyle uiStyle = FranklyUiStyles.resolve(style,
+                new FranklyUiStyle(COLOR_BG, COLOR_BG, COLOR_BG, 0, 0xFFFFFFFF, 0xFFFFFFFF,
+                        SCROLLBAR_THUMB, 0, FranklyUiStyle.BorderType.NONE, 0, 0));
+        uiStyle.drawBox(graphics, getX(), getY(), width, height, false, active);
 
         graphics.enableScissor(getX(), getY(), getX() + width, getY() + height);
         for (Entry entry : children) {
@@ -99,7 +112,7 @@ public class FranklyScrollPanel extends AbstractWidget {
             int thumbHeight = Math.max(10, (int) ((float) height * height / contentHeight));
             int thumbY = getY() + (int) ((height - thumbHeight) * (scrollAmount / max));
             graphics.fill(trackX, getY(), trackX + SCROLLBAR_WIDTH, getY() + height, SCROLLBAR_TRACK);
-            graphics.fill(trackX, thumbY, trackX + SCROLLBAR_WIDTH, thumbY + thumbHeight, SCROLLBAR_THUMB);
+            graphics.fill(trackX, thumbY, trackX + SCROLLBAR_WIDTH, thumbY + thumbHeight, uiStyle.accentColor());
         }
     }
 

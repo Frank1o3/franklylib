@@ -9,6 +9,9 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyle;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyles;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -22,15 +25,17 @@ public class FranklyDropdown<T> extends AbstractWidget {
     private final Consumer<T> onSelect;
     private T current;
     private boolean expanded;
+    private final @Nullable Identifier style;
 
     private FranklyDropdown(int x, int y, int width, int height, List<T> options, T current,
-            Function<T, Component> labelMapper, Consumer<T> onSelect) {
+            Function<T, Component> labelMapper, Consumer<T> onSelect, @Nullable Identifier style) {
         super(x, y, width, height, Component.empty());
         this.options = List.copyOf(options);
         this.current = current;
         this.labelMapper = labelMapper != null ? labelMapper : value -> Component.literal(String.valueOf(value));
         this.onSelect = onSelect != null ? onSelect : value -> {
         };
+        this.style = style;
     }
 
     public T getCurrent() {
@@ -57,24 +62,24 @@ public class FranklyDropdown<T> extends AbstractWidget {
                 .bounds(getX(), getY(), getWidth(), getHeight())
                 .message(labelMapper.apply(current))
                 .onPress(btn -> expanded = !expanded)
+                .style(style)
                 .build()
                 .extractContents(graphics, mouseX, mouseY, delta);
         Font font = Minecraft.getInstance().font;
-        graphics.text(font, "▾", getX() + getWidth() - 14, getY() + (getHeight() - font.lineHeight) / 2, 0xFF_FFFFFF,
+        FranklyUiStyle uiStyle = FranklyUiStyles.resolve(style, FranklyUiStyle.DEFAULT);
+        graphics.text(font, "▾", getX() + getWidth() - 14, getY() + (getHeight() - font.lineHeight) / 2, uiStyle.text(active),
                 false);
         if (expanded) {
             int optionHeight = Math.max(14, getHeight());
             int listHeight = Math.min(options.size() * optionHeight, 140);
-            graphics.fill(getX(), getY() + getHeight(), getX() + getWidth(), getY() + getHeight() + listHeight,
-                    0xCC_222233);
+            uiStyle.drawBox(graphics, getX(), getY() + getHeight(), getWidth(), listHeight, false, active);
             for (int i = 0; i < options.size(); i++) {
                 T option = options.get(i);
                 int y = getY() + getHeight() + i * optionHeight;
                 int bg = (mouseX >= getX() && mouseX <= getX() + getWidth() && mouseY >= y && mouseY < y + optionHeight)
-                        ? 0x88_666688
-                        : 0x54_444444;
+                        ? uiStyle.hoverBackground() : uiStyle.background();
                 graphics.fill(getX(), y, getX() + getWidth(), y + optionHeight, bg);
-                graphics.text(font, labelMapper.apply(option), getX() + 4, y + 3, 0xFF_FFFFFF, false);
+                graphics.text(font, labelMapper.apply(option), getX() + uiStyle.padding(), y + 3, uiStyle.text(active), false);
             }
         }
     }
@@ -119,6 +124,7 @@ public class FranklyDropdown<T> extends AbstractWidget {
         private T current;
         private @Nullable Function<T, Component> labelMapper;
         private @Nullable Consumer<T> onSelect;
+        private @Nullable Identifier style;
 
         public Builder<T> bounds(int x, int y, int width, int height) {
             this.x = x;
@@ -148,8 +154,13 @@ public class FranklyDropdown<T> extends AbstractWidget {
             return this;
         }
 
+        public Builder<T> style(@Nullable Identifier style) {
+            this.style = style;
+            return this;
+        }
+
         public FranklyDropdown<T> build() {
-            return new FranklyDropdown<>(x, y, width, height, options, current, labelMapper, onSelect);
+            return new FranklyDropdown<>(x, y, width, height, options, current, labelMapper, onSelect, style);
         }
     }
 }

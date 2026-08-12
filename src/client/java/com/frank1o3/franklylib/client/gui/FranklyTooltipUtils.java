@@ -5,6 +5,10 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyle;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyles;
+import org.jetbrains.annotations.Nullable;
 
 @Environment(EnvType.CLIENT)
 public final class FranklyTooltipUtils {
@@ -16,16 +20,20 @@ public final class FranklyTooltipUtils {
     }
 
     public static void drawTooltip(GuiGraphicsExtractor graphics, Font font, int x, int y, Component message) {
+        drawTooltip(graphics, font, x, y, message, null);
+    }
+
+    /** Draws a tooltip using the optional resource-pack style. */
+    public static void drawTooltip(GuiGraphicsExtractor graphics, Font font, int x, int y, Component message,
+            @Nullable Identifier style) {
         if (message == null || message.getString().isBlank()) {
             return;
         }
         int width = font.width(message) + 8;
         int height = font.lineHeight + 6;
-        graphics.fill(x, y, x + width, y + height, BG);
-        graphics.fill(x, y, x + width, y + 1, BORDER);
-        graphics.fill(x, y + height - 1, x + width, y + height, BORDER);
-        graphics.fill(x, y, x + 1, y + height, BORDER);
-        graphics.fill(x + width - 1, y, x + width, y + height, BORDER);
-        graphics.text(font, message, x + 4, y + 3, TEXT, false);
+        FranklyUiStyle uiStyle = FranklyUiStyles.resolve(style,
+                new FranklyUiStyle(BG, BG, BG, BORDER, TEXT, TEXT, TEXT, 4, FranklyUiStyle.BorderType.SQUARE, 0, 1));
+        uiStyle.drawBox(graphics, x, y, width, height, false, true);
+        graphics.text(font, message, x + uiStyle.padding(), y + 3, uiStyle.textColor(), false);
     }
 }

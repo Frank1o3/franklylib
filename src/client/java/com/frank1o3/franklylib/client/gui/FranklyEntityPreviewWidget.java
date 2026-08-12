@@ -7,7 +7,11 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyle;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyles;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
@@ -26,18 +30,22 @@ public class FranklyEntityPreviewWidget extends AbstractWidget {
     private final int previewSize;
     private float orbitYaw = 0f;
     private boolean dragging;
+    private final @Nullable Identifier style;
 
     private FranklyEntityPreviewWidget(int x, int y, int width, int height, int previewSize,
-            Supplier<LivingEntity> entitySupplier) {
+            Supplier<LivingEntity> entitySupplier, @Nullable Identifier style) {
         super(x, y, width, height, Component.empty());
         this.previewSize = previewSize;
         this.entitySupplier = entitySupplier;
+        this.style = style;
     }
 
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         LivingEntity entity = entitySupplier.get();
-        graphics.fill(getX(), getY(), getX() + width, getY() + height, 0x33_000000);
+        FranklyUiStyles.resolve(style, new FranklyUiStyle(0x33000000, 0x33000000, 0x33000000, 0,
+                0xFFFFFFFF, 0xFFFFFFFF, 0, 0, FranklyUiStyle.BorderType.NONE, 0, 0))
+                .drawBox(graphics, getX(), getY(), width, height, isHoveredOrFocused(), active);
         if (entity == null) {
             return;
         }
@@ -76,6 +84,7 @@ public class FranklyEntityPreviewWidget extends AbstractWidget {
     public static final class Builder {
         private int x, y, width = 80, height = 100, previewSize = 30;
         private Supplier<LivingEntity> entitySupplier = () -> null;
+        private @Nullable Identifier style;
 
         public Builder bounds(int x, int y, int width, int height) {
             this.x = x;
@@ -95,8 +104,13 @@ public class FranklyEntityPreviewWidget extends AbstractWidget {
             return this;
         }
 
+        public Builder style(@Nullable Identifier style) {
+            this.style = style;
+            return this;
+        }
+
         public FranklyEntityPreviewWidget build() {
-            return new FranklyEntityPreviewWidget(x, y, width, height, previewSize, entitySupplier);
+            return new FranklyEntityPreviewWidget(x, y, width, height, previewSize, entitySupplier, style);
         }
     }
 }

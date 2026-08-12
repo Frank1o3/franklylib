@@ -1,0 +1,13 @@
+{
+  "padding": 2,
+  "border": { "type": "square", "width": 1 },
+  "colors": {
+    "background": "#54444444",
+    "hover_background": "#54666666",
+    "disabled_background": "#54222222",
+    "border": "#FFBBBBBB",
+    "text": "#FFFFFFFF",
+    "disabled_text": "#FF666666",
+    "accent": "#FF66CC66"
+  }
+}

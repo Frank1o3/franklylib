@@ -22,28 +22,44 @@ import java.util.WeakHashMap;
 
 /**
  * Optional, resource-pack-driven widget animation service. Definitions live at
- * {@code assets/<namespace>/franklylib/ui_animations/<name>.json}; a widget
+ * {@code assets/<namespace>/ui_animations/<name>.json}; a widget
  * opts
  * in by passing {@code <namespace>:<name>} to its builder.
  */
 @Environment(EnvType.CLIENT)
 public final class FranklyUiAnimations {
-    private static final String DIRECTORY = "franklylib/ui_animations";
+    private static volatile String resourceDirectory = "ui_animations";
     private static final Map<Object, Instance> INSTANCES = new WeakHashMap<>();
     private static volatile Map<Identifier, Definition> definitions = Map.of();
 
     private FranklyUiAnimations() {
     }
 
+    /**
+     * Changes the path below {@code assets/<namespace>} scanned on the next resource reload.
+     * Call this from client initialisation before packs are loaded.
+     */
+    public static void setResourceDirectory(String directory) {
+        if (directory == null || directory.isBlank() || directory.startsWith("/") || directory.endsWith("/")) {
+            throw new IllegalArgumentException("UI animation directory must be a relative, non-empty path");
+        }
+        resourceDirectory = directory;
+    }
+
+    public static String getResourceDirectory() {
+        return resourceDirectory;
+    }
+
     public static void registerReloadListener() {
         ResourceLoader.get(PackType.CLIENT_RESOURCES)
                 .registerReloadListener(FranklyLib.id("ui_animations"), (ResourceManagerReloadListener) manager -> {
+                    String directory = resourceDirectory;
                     Map<Identifier, Definition> loaded = new HashMap<>();
-                    manager.listResources(DIRECTORY, id -> id.getPath().endsWith(".json"))
+                    manager.listResources(directory, id -> id.getPath().endsWith(".json"))
                             .forEach((fileId, resource) -> {
                                 Definition definition = parse(fileId, resource);
                                 if (definition != null) {
-                                    String path = fileId.getPath().substring(DIRECTORY.length() + 1,
+                                    String path = fileId.getPath().substring(directory.length() + 1,
                                             fileId.getPath().length() - 5);
                                     loaded.put(Identifier.fromNamespaceAndPath(fileId.getNamespace(), path),
                                             definition);
