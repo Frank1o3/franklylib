@@ -27,10 +27,15 @@ public final class ConfigValueHandlers {
 
     /** Registers (or overrides) the handler used for {@code type}. */
     public static <T> void register(Class<T> type, ConfigValueHandler<T> handler) {
+        // Field.get and method invocation always box primitive values. Class.cast,
+        // however, does not unbox: boolean.class.cast(Boolean.TRUE) throws a
+        // ClassCastException. Normalize primitive tokens to their boxed class at
+        // this boundary so primitive and wrapper config fields share a handler.
+        Class<?> valueType = boxedType(type);
         HANDLERS.put(type, new ConfigValueHandler<>() {
             @Override
             public JsonElement toJson(Object value) {
-                return handler.toJson(type.cast(value));
+                return handler.toJson(castValue(valueType, value));
             }
 
             @Override
@@ -40,9 +45,30 @@ public final class ConfigValueHandlers {
 
             @Override
             public Object clamp(Object value, ConfigFieldEntry entry) {
-                return handler.clamp(type.cast(value), entry);
+                return handler.clamp(castValue(valueType, value), entry);
             }
         });
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T castValue(Class<?> type, Object value) {
+        return (T) type.cast(value);
+    }
+
+    private static Class<?> boxedType(Class<?> type) {
+        if (!type.isPrimitive()) {
+            return type;
+        }
+        if (type == boolean.class) return Boolean.class;
+        if (type == byte.class) return Byte.class;
+        if (type == char.class) return Character.class;
+        if (type == short.class) return Short.class;
+        if (type == int.class) return Integer.class;
+        if (type == long.class) return Long.class;
+        if (type == float.class) return Float.class;
+        if (type == double.class) return Double.class;
+        if (type == void.class) return Void.class;
+        throw new IllegalArgumentException("Unknown primitive type: " + type);
     }
 
     /**
