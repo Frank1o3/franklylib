@@ -261,3 +261,8 @@ jobs:
           game-versions: ${{ needs.build.outputs.game_version }}
           files: ${{ steps.jar.outputs.jar }}
           environment: client_only
+          dependencies: |-
+            [{
+              "project_id": "P7dR8mSH",
+              "dependency_type": "required"
+            }]

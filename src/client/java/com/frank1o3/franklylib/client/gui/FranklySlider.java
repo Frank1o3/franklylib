@@ -70,10 +70,6 @@ public final class FranklySlider extends AbstractWidget {
     private static final int COLOR_FILL_DISABLED = 0xB4_111133;
     /** ARGB colour of the thumb indicator. */
     private static final int COLOR_THUMB = 0x78_FFFFFF;
-    /**
-     * Text colour when hovered, focused, or value has changed since last commit.
-     */
-    private static final int COLOR_TEXT_HIGHLIGHT = 0xFF_FFFF55;
     /** Default text colour. */
     private static final int COLOR_TEXT_NORMAL = 0xFF_FFFFFF;
     /** Text colour when disabled. */
@@ -386,17 +382,6 @@ public final class FranklySlider extends AbstractWidget {
         } else {
             setMessage(formatted);
         }
-    }
-
-    /** Chooses the correct text colour given the current widget state. */
-    private int resolveTextColor() {
-        if (!active) {
-            return COLOR_TEXT_DISABLED;
-        }
-        if ((isHoveredOrFocused()) || hasUncommittedChange) {
-            return COLOR_TEXT_HIGHLIGHT;
-        }
-        return COLOR_TEXT_NORMAL;
     }
 
     // -------------------------------------------------------------------------

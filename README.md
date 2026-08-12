@@ -11,6 +11,9 @@ gives other mods two things:
    primitives or fully custom vertex/index data), optionally deform their vertices
    per-frame via a plug-in callback, and render them either as free-floating 3D
    geometry or attached to a point on a living entity's model.
+3. **A JSON config engine** — persist annotated config objects on either side,
+   with validation, automatic saves, safe external-file reloads, nested groups,
+   and extensible value handlers.
 
 FranklyLib has **no gameplay of its own** and ships **no networking code**. It's a
 toolkit other mods depend on, not a mod players install standalone.
@@ -114,6 +117,21 @@ FranklyAttachmentRenderer.render(
 
 See [`docs/mesh-api.md`](docs/mesh-api.md) for the full mesh/rendering reference.
 
+### Config engine
+
+The common-side config engine persists annotated Java objects as JSON and can be
+used by both dedicated servers and clients. It supports numeric bounds, renamed
+keys, nested config groups, records, automatic saving, and reload detection.
+
+```java
+FranklyConfigHolder<MyConfig> config = FranklyConfigHolder.builder(MyConfig.class, MyConfig::new)
+        .path(FabricLoader.getInstance().getConfigDir().resolve("mymod.json"))
+        .build();
+```
+
+See [`docs/config-engine.md`](docs/config-engine.md) for setup, lifecycle wiring,
+and the complete annotation/value-type reference.
+
 ## What this library is *not*
 
 - No physics simulation — deformation is a plain `(Mesh, float) -> Vec3[]` callback
@@ -126,6 +144,7 @@ See [`docs/mesh-api.md`](docs/mesh-api.md) for the full mesh/rendering reference
 
 - [GUI widget reference](docs/gui-widgets.md)
 - [Mesh & rendering API reference](docs/mesh-api.md)
+- [Config engine reference](docs/config-engine.md)
 
 ## License
 

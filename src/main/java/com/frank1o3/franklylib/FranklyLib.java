@@ -21,7 +21,7 @@ public class FranklyLib implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 
-		LOGGER.info("Hello This is my custom lib for making custom UI screens and other stuff and should only be used on the server side!");
+		LOGGER.info("FranklyLib config engine initialized for client and server.");
 	}
 
 	public static Identifier id(String path) {

@@ -12,7 +12,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import com.frank1o3.franklylib.client.gui.style.FranklyUiStyle;
 import com.frank1o3.franklylib.client.gui.style.FranklyUiStyles;
-import com.frank1o3.franklylib.client.gui.animation.FranklyUiAnimations;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
