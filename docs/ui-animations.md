@@ -18,7 +18,9 @@ Resource packs define a preset at `assets/<namespace>/ui_animations/<name>.json`
 
 Supported fields per state are `translate_x`, `translate_y`, `scale`, and `alpha`; omitted fields use identity values. Supported easing names are `linear`, `in_quad`, `out_quad`, and `in_out_quad`.
 
-Current widget support: `FranklyButton`, `FranklySlider`, and `FranklyNumberInput`.
+Current widget support: `FranklyButton`, `FranklySlider`, `FranklyNumberInput`, and
+`FranklyDropdown`. Dropdowns animate their trigger like a button and independently
+ease their popup open/closed with a clipped fade and depth shadow.
 
 ## Asset location
 
