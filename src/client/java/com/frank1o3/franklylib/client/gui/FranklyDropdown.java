@@ -12,6 +12,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import com.frank1o3.franklylib.client.gui.style.FranklyUiStyle;
 import com.frank1o3.franklylib.client.gui.style.FranklyUiStyles;
+import com.frank1o3.franklylib.client.gui.animation.FranklyUiAnimations;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -25,10 +26,14 @@ public class FranklyDropdown<T> extends AbstractWidget {
     private final Consumer<T> onSelect;
     private T current;
     private boolean expanded;
+    private float expansionProgress;
+    private long expansionUpdatedAt = System.nanoTime();
+    private final @Nullable Identifier animation;
     private final @Nullable Identifier style;
 
     private FranklyDropdown(int x, int y, int width, int height, List<T> options, T current,
-            Function<T, Component> labelMapper, Consumer<T> onSelect, @Nullable Identifier style) {
+            Function<T, Component> labelMapper, Consumer<T> onSelect, @Nullable Identifier style,
+            @Nullable Identifier animation) {
         super(x, y, width, height, Component.empty());
         this.options = List.copyOf(options);
         this.current = current;
@@ -36,6 +41,7 @@ public class FranklyDropdown<T> extends AbstractWidget {
         this.onSelect = onSelect != null ? onSelect : value -> {
         };
         this.style = style;
+        this.animation = animation;
     }
 
     public T getCurrent() {
@@ -58,30 +64,57 @@ public class FranklyDropdown<T> extends AbstractWidget {
 
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        updateExpansion();
         FranklyButton.builder()
                 .bounds(getX(), getY(), getWidth(), getHeight())
                 .message(labelMapper.apply(current))
                 .onPress(btn -> expanded = !expanded)
                 .style(style)
+                .animation(animation)
                 .build()
                 .extractContents(graphics, mouseX, mouseY, delta);
         Font font = Minecraft.getInstance().font;
         FranklyUiStyle uiStyle = FranklyUiStyles.resolve(style, FranklyUiStyle.DEFAULT);
         graphics.text(font, "▾", getX() + getWidth() - 14, getY() + (getHeight() - font.lineHeight) / 2, uiStyle.text(active),
                 false);
-        if (expanded) {
+        if (expansionProgress > 0.001f) {
             int optionHeight = Math.max(14, getHeight());
             int listHeight = Math.min(options.size() * optionHeight, 140);
-            uiStyle.drawBox(graphics, getX(), getY() + getHeight(), getWidth(), listHeight, false, active);
+            int listY = getY() + getHeight() + Math.round(4 * (1f - expansionProgress));
+            int visibleHeight = Math.max(1, Math.round(listHeight * expansionProgress));
+            // A soft offset shadow keeps the popup visually separate from widgets below it.
+            graphics.fill(getX() + 2, listY + 3, getX() + getWidth() + 2, listY + visibleHeight + 3,
+                    alpha(0x70000000, expansionProgress));
+            graphics.enableScissor(getX() - 2, listY, getX() + getWidth() + 2, listY + visibleHeight);
+            uiStyle.withAlpha(expansionProgress)
+                    .drawBox(graphics, getX(), listY, getWidth(), listHeight, false, active);
             for (int i = 0; i < options.size(); i++) {
                 T option = options.get(i);
-                int y = getY() + getHeight() + i * optionHeight;
+                int y = listY + i * optionHeight;
                 int bg = (mouseX >= getX() && mouseX <= getX() + getWidth() && mouseY >= y && mouseY < y + optionHeight)
                         ? uiStyle.hoverBackground() : uiStyle.background();
-                graphics.fill(getX(), y, getX() + getWidth(), y + optionHeight, bg);
-                graphics.text(font, labelMapper.apply(option), getX() + uiStyle.padding(), y + 3, uiStyle.text(active), false);
+                graphics.fill(getX() + 1, y, getX() + getWidth() - 1, y + optionHeight,
+                        alpha(bg, expansionProgress));
+                graphics.text(font, labelMapper.apply(option), getX() + uiStyle.padding(), y + 3,
+                        alpha(uiStyle.text(active), expansionProgress), false);
             }
+            graphics.disableScissor();
         }
+    }
+
+    private void updateExpansion() {
+        long now = System.nanoTime();
+        float elapsed = Math.min(1f, (now - expansionUpdatedAt) / 140_000_000f);
+        expansionUpdatedAt = now;
+        float target = expanded ? 1f : 0f;
+        // Ease out on both directions: responsive at the start, settled at the end.
+        float progress = 1f - (1f - elapsed) * (1f - elapsed);
+        expansionProgress += (target - expansionProgress) * progress;
+    }
+
+    private static int alpha(int color, float alpha) {
+        int base = color >>> 24;
+        return (Math.round(base * Math.clamp(alpha, 0f, 1f)) << 24) | (color & 0x00FFFFFF);
     }
 
     @Override
@@ -125,6 +158,7 @@ public class FranklyDropdown<T> extends AbstractWidget {
         private @Nullable Function<T, Component> labelMapper;
         private @Nullable Consumer<T> onSelect;
         private @Nullable Identifier style;
+        private @Nullable Identifier animation;
 
         public Builder<T> bounds(int x, int y, int width, int height) {
             this.x = x;
@@ -159,8 +193,14 @@ public class FranklyDropdown<T> extends AbstractWidget {
             return this;
         }
 
+        /** Applies the same optional transform animation used by buttons. */
+        public Builder<T> animation(@Nullable Identifier animation) {
+            this.animation = animation;
+            return this;
+        }
+
         public FranklyDropdown<T> build() {
-            return new FranklyDropdown<>(x, y, width, height, options, current, labelMapper, onSelect, style);
+            return new FranklyDropdown<>(x, y, width, height, options, current, labelMapper, onSelect, style, animation);
         }
     }
 }
