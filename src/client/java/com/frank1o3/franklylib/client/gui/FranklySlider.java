@@ -112,9 +112,9 @@ public final class FranklySlider extends AbstractWidget {
     private double normalized;
 
     /**
-     * True after the first {@link #onValueChanged} call that produced a different
-     * value from the initial one; cleared when the value is committed.
-     * Drives the text highlight colour to signal unsaved changes.
+     * True when a user interaction changed the snapped value and that change
+     * has not yet been committed. This prevents no-op releases and Enter presses
+     * from invoking {@link #onValueCommitted}.
      */
     private boolean hasUncommittedChange;
 
@@ -354,20 +354,28 @@ public final class FranklySlider extends AbstractWidget {
     }
 
     /**
-     * Clamps + snaps {@code norm} into the slider position, fires
-     * {@link #onValueChanged}, and refreshes the label.
+     * Clamps + snaps {@code norm} into the slider position. If the snapped value
+     * changed, marks it pending, fires {@link #onValueChanged}, and refreshes
+     * the label.
      */
     private void applyNormAndNotify(double norm) {
+        double previousValue = getValue();
         setNormalized(norm);
+        if (Double.compare(previousValue, getValue()) == 0) {
+            return;
+        }
         hasUncommittedChange = true;
         refreshMessage();
         onValueChanged.accept(getValue());
     }
 
     /**
-     * Fires {@link #onValueCommitted} and clears the uncommitted-change flag.
+     * Fires {@link #onValueCommitted} only for a pending user change.
      */
     private void commit() {
+        if (!hasUncommittedChange) {
+            return;
+        }
         hasUncommittedChange = false;
         onValueCommitted.accept(getValue());
     }
