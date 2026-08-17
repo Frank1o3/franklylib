@@ -218,13 +218,13 @@ extra setup needed in your mod.
 
 ---
 
-## Screen chrome — BaseScaleScreen
+## Screen chrome — BaseFranklyScreen
 
 A base `Screen` subclass providing the shared panel look: a dimmed background overlay,
 a bordered centered panel, and a title drawn at its top.
 
 ```java
-public class MyScreen extends BaseScaleScreen {
+public class MyScreen extends BaseFranklyScreen {
     public MyScreen(Screen parent) {
         super(Component.literal("My Screen"), parent, 220, 160);
     }
@@ -240,11 +240,6 @@ public class MyScreen extends BaseScaleScreen {
 `panelX()` / `panelY()` give the panel's top-left corner (valid after `init()`).
 Override `renderPanelContent(...)` for content drawn between the panel chrome and its
 child widgets. `onClose()` returns to the `parent` screen passed to the constructor.
-
-> Despite the "Frankly" naming of every other widget in this file, this class is
-> currently still named `BaseScaleScreen` rather than `BaseFranklyScreen`. Worth a
-> rename before you publish, so the public API doesn't read like a leftover from a
-> different mod.
 
 ---
 

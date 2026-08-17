@@ -154,19 +154,6 @@ public class FranklyTextBox extends AbstractWidget {
             return true;
         }
 
-        char c = (char) key;
-        if (c >= 32 && c <= 126) {
-            String next = value.substring(0, cursor) + c + value.substring(cursor);
-            if (maxLength <= 0 || next.length() <= maxLength) {
-                if (filter == null || filter.test(next)) {
-                    value = next;
-                    cursor++;
-                    onChanged.accept(value);
-                    return true;
-                }
-            }
-        }
-
         return super.keyPressed(event);
     }
 
