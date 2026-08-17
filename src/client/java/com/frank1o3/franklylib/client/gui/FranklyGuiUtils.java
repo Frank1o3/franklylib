@@ -13,6 +13,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
+
+import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -83,17 +85,21 @@ public final class FranklyGuiUtils {
     // -------------------------------------------------------------------------
 
     /**
-     * Renders {@code entity} inside the given screen-space box, facing the mouse
-     * cursor, at its true current scale (unlike vanilla's inventory preview,
-     * which normalises entity scale back to 1.0). This lets a scale screen show
-     * a live, correctly-sized preview of the player as the slider moves.
+     * As
+     * {@link #drawScaledEntityPreview(GuiGraphicsExtractor, int, int, int, int, int, float, float, LivingEntity)},
+     * but overrides the rendered entity's scale instead of using its live
+     * {@code minecraft:scale} attribute value.
      *
-     * @param entity the entity to render — pass the local player for the
-     *               self-service screen, or the resolved target player for the
-     *               admin screen (only meaningful while they're online).
+     * @param lockedScale if non-null, the entity is rendered at this scale
+     *                    regardless of its actual current scale (1.0 = the
+     *                    entity's unscaled default size, 2.0 = double,
+     *                    0.5 = half, etc). If null, behaves identically to
+     *                    the other overload — the entity's true current scale
+     *                    is shown, so external size changes (e.g. from
+     *                    another mod) are reflected live.
      */
     public static void drawScaledEntityPreview(GuiGraphicsExtractor graphics, int x1, int y1, int x2, int y2,
-            int size, float mouseX, float mouseY, LivingEntity entity) {
+            int size, float mouseX, float mouseY, LivingEntity entity, @Nullable Float lockedScale) {
         float centerX = (x1 + x2) / 2.0F;
         float centerY = (y1 + y2) / 2.0F;
         float yaw = (float) Math.atan((centerX - mouseX) / 40.0F);
@@ -108,12 +114,27 @@ public final class FranklyGuiUtils {
             living.bodyRot = 180.0F + yaw * 20.0F;
             living.yRot = yaw * 20.0F;
             living.xRot = living.pose != Pose.FALL_FLYING ? -pitch * 20.0F : 0.0F;
-            // Deliberately leave living.scale untouched: this is the one place we
+            if (lockedScale != null) {
+                // Overrides the real attribute-driven scale so this preview stays
+                // fixed regardless of what any other mod does to the entity's
+                // actual size (e.g. Proportionality's minecraft:scale changes).
+                living.scale = lockedScale;
+            }
+            // Otherwise deliberately left untouched: this is the one place we
             // WANT the real scale attribute to show, so the preview reflects the
             // slider's actual effect on the player's size.
         }
 
         Vector3f translation = new Vector3f(0.0F, state.boundingBoxHeight / 2.0F + ENTITY_PREVIEW_Y_OFFSET, 0.0F);
         graphics.entity(state, size, translation, rotation, pitchRotation, x1, y1, x2, y2);
+    }
+
+    /**
+     * Overload for callers that don't need a locked scale — behaves exactly as
+     * before.
+     */
+    public static void drawScaledEntityPreview(GuiGraphicsExtractor graphics, int x1, int y1, int x2, int y2,
+            int size, float mouseX, float mouseY, LivingEntity entity) {
+        drawScaledEntityPreview(graphics, x1, y1, x2, y2, size, mouseX, mouseY, entity, null);
     }
 }
