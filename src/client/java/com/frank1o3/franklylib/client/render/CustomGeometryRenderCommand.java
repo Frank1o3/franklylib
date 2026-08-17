@@ -76,8 +76,21 @@ public record CustomGeometryRenderCommand(
             Vec3 ab = pb.subtract(pa);
             Vec3 ac = pc.subtract(pa);
             Vec3 faceNormal = ab.cross(ac).normalize();
-            Vector3f transformedNormal = new Vector3f(faceNormal.x(), faceNormal.y(), faceNormal.z()).mul(matrix3f);
-            Vector3f reversedNormal = new Vector3f(transformedNormal).negate();
+            Vector3f defaultNormal = new Vector3f(faceNormal.x(), faceNormal.y(), faceNormal.z()).mul(matrix3f);
+
+            Vector3f na = a.normal() != null && !a.normal().equals(Vec3.ZERO)
+                    ? new Vector3f(a.normal().x(), a.normal().y(), a.normal().z()).mul(matrix3f)
+                    : defaultNormal;
+            Vector3f nb = b.normal() != null && !b.normal().equals(Vec3.ZERO)
+                    ? new Vector3f(b.normal().x(), b.normal().y(), b.normal().z()).mul(matrix3f)
+                    : defaultNormal;
+            Vector3f nc = c.normal() != null && !c.normal().equals(Vec3.ZERO)
+                    ? new Vector3f(c.normal().x(), c.normal().y(), c.normal().z()).mul(matrix3f)
+                    : defaultNormal;
+
+            Vector3f rna = new Vector3f(na).negate();
+            Vector3f rnb = new Vector3f(nb).negate();
+            Vector3f rnc = new Vector3f(nc).negate();
 
             // Entity render types use QUADS, not a triangle-list primitive.
             // Submit every triangle as a degenerate quad so the next triangle
@@ -86,10 +99,10 @@ public record CustomGeometryRenderCommand(
             // plus unrelated UV samples to bleed onto the mesh.
 
             // Front winding (a, b, c) — matches the mesh's authored index order.
-            submitVertex(vertexConsumer, matrix4f, pa, a.u(), a.v(), transformedNormal);
-            submitVertex(vertexConsumer, matrix4f, pb, b.u(), b.v(), transformedNormal);
-            submitVertex(vertexConsumer, matrix4f, pc, c.u(), c.v(), transformedNormal);
-            submitVertex(vertexConsumer, matrix4f, pc, c.u(), c.v(), transformedNormal);
+            submitVertex(vertexConsumer, matrix4f, pa, a.u(), a.v(), na);
+            submitVertex(vertexConsumer, matrix4f, pb, b.u(), b.v(), nb);
+            submitVertex(vertexConsumer, matrix4f, pc, c.u(), c.v(), nc);
+            submitVertex(vertexConsumer, matrix4f, pc, c.u(), c.v(), nc);
 
             // Reversed winding (a, c, b) with a flipped normal — guarantees this
             // triangle is still visible if the render type culls backfaces and
@@ -97,10 +110,10 @@ public record CustomGeometryRenderCommand(
             // what actually fixes "randomly missing triangle" artifacts on
             // procedural/curved meshes, at the cost of ~2x vertices for custom
             // geometry submissions.
-            submitVertex(vertexConsumer, matrix4f, pa, a.u(), a.v(), reversedNormal);
-            submitVertex(vertexConsumer, matrix4f, pc, c.u(), c.v(), reversedNormal);
-            submitVertex(vertexConsumer, matrix4f, pb, b.u(), b.v(), reversedNormal);
-            submitVertex(vertexConsumer, matrix4f, pb, b.u(), b.v(), reversedNormal);
+            submitVertex(vertexConsumer, matrix4f, pa, a.u(), a.v(), rna);
+            submitVertex(vertexConsumer, matrix4f, pc, c.u(), c.v(), rnc);
+            submitVertex(vertexConsumer, matrix4f, pb, b.u(), b.v(), rnb);
+            submitVertex(vertexConsumer, matrix4f, pb, b.u(), b.v(), rnb);
         }
     }
 

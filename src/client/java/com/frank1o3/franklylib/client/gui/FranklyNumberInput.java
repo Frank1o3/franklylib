@@ -595,6 +595,9 @@ public class FranklyNumberInput extends AbstractWidget {
         }
 
         public FranklyNumberInput build() {
+            if (min > max) {
+                throw new IllegalArgumentException("min (" + min + ") must not be greater than max (" + max + ")");
+            }
             return new FranklyNumberInput(this);
         }
     }

@@ -57,6 +57,7 @@ public class FranklyTextBox extends AbstractWidget {
     public void setValue(String value) {
         this.value = value == null ? "" : value;
         this.cursor = Math.min(cursor, this.value.length());
+        this.scrollOffset = Math.min(scrollOffset, this.cursor);
         onChanged.accept(this.value);
     }
 

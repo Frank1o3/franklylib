@@ -225,7 +225,8 @@ public final class FranklySlider extends AbstractWidget {
         int textColor = FranklyUiAnimations.applyAlpha(active ? uiStyle.textColor() : uiStyle.disabledTextColor(), frame.alpha());
         int textLeft = getX() + uiStyle.padding();
         int textRight = getX() + width - uiStyle.padding();
-        drawCentredScrollableText(graphics, font, getMessage(), textLeft, textRight, textColor);
+        FranklyGuiUtils.drawFittedText(FranklyGuiUtils.Justify.CENTER, graphics, font, getMessage(),
+                textLeft, getY(), textRight, getY() + height, textColor);
 
         FranklyUiAnimations.endTransform(graphics);
     }
@@ -411,39 +412,6 @@ public final class FranklySlider extends AbstractWidget {
         }
         double steps = Math.round((value - min) / step);
         return Mth.clamp(min + steps * step, min, max);
-    }
-
-    // -------------------------------------------------------------------------
-    // Text rendering helper
-    // -------------------------------------------------------------------------
-
-    /**
-     * Draws text centred between {@code left} and {@code right}, with horizontal
-     * scrolling if the text is wider than the available space.
-     * This replicates the pattern used in WildfireSlider / GuiUtils without
-     * importing Wildfire classes directly.
-     */
-    private void drawCentredScrollableText(
-            GuiGraphicsExtractor graphics, Font font, Component text,
-            int left, int right, int color) {
-        int textWidth = font.width(text);
-        int available = right - left;
-        int centeredX = left + (available - textWidth) / 2;
-        int textY = getY() + (height - font.lineHeight) / 2;
-
-        if (textWidth <= available) {
-            graphics.text(font, text, centeredX, textY, color, false);
-        } else {
-            // Oscillating scroll using system time – identical to Minecraft's own approach.
-            double millis = net.minecraft.util.Util.getMillis() / 1000.0;
-            double period = Math.max((textWidth - available) * 0.5, 3.0);
-            double factor = Math.sin(Math.PI / 2.0 * Math.cos(Math.PI * 2.0 * millis / period)) / 2.0 + 0.5;
-            int scrollX = (int) Mth.lerp(factor, 0.0, textWidth - available);
-
-            graphics.enableScissor(left, getY(), right, getY() + height);
-            graphics.text(font, text, left - scrollX, textY, color, false);
-            graphics.disableScissor();
-        }
     }
 
     // =========================================================================

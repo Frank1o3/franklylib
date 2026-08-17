@@ -59,7 +59,8 @@ public class FranklyCheckbox extends AbstractWidget {
         uiStyle.drawBox(graphics, getX(), getY(), width, height, isHoveredOrFocused(), active);
 
         if (checked) {
-            graphics.fill(getX() + uiStyle.padding(), getY() + uiStyle.padding(), getX() + width - uiStyle.padding(), getY() + height - uiStyle.padding(), uiStyle.accentColor());
+            int pad = Math.min(uiStyle.padding(), Math.min(width, height) / 2 - 1);
+            graphics.fill(getX() + pad, getY() + pad, getX() + width - pad, getY() + height - pad, uiStyle.accentColor());
         }
 
         Font font = Minecraft.getInstance().font;

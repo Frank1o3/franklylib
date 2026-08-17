@@ -108,7 +108,8 @@ public final class ConfigSchema {
             for (RecordComponent component : components) {
                 ConfigEntry annotation = component.getAnnotation(ConfigEntry.class);
                 if (annotation == null) {
-                    continue;
+                    throw new ConfigSchemaException("Record component '" + component.getName() + "' in "
+                            + type.getName() + " is missing @ConfigEntry. Every record component must be annotated.");
                 }
                 Method accessorMethod = component.getAccessor();
                 entries.add(buildEntry(annotation, component, component.getName(), component.getType(),
@@ -117,7 +118,7 @@ public final class ConfigSchema {
 
             if (entries.isEmpty()) {
                 throw new ConfigSchemaException(
-                        "Record " + type.getName() + " has no @ConfigEntry-annotated components");
+                        "Record " + type.getName() + " has no components");
             }
             return new ConfigSchema(type, true, List.copyOf(entries), canonical);
         }

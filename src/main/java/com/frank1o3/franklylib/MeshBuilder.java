@@ -45,6 +45,11 @@ public final class MeshBuilder {
         return Mesh.of(vertices.toArray(new MeshVertex[0]), indices.stream().mapToInt(Integer::intValue).toArray());
     }
 
+    /**
+     * Generates an open triangle fan from a central point and a sequence of rim points.
+     * Note: This produces an open fan (does not generate a closing triangle between the last
+     * and first rim points). If a closed fan is desired, include the first rim point at the end.
+     */
     public static Mesh triangleFan(Vec3 center, List<Vec3> rimPoints) {
         if (rimPoints.size() < 3) {
             throw new IllegalArgumentException("triangleFan requires at least 3 rim points");
@@ -285,13 +290,16 @@ public final class MeshBuilder {
         Vec3 v = normalizedAxis.cross(u).normalize();
         for (int i = 0; i <= major; i++) {
             float majorAngle = (float) (2.0 * Math.PI * i / major);
-            Vec3 ringCenter = center.add(u.scale((float) Math.cos(majorAngle) * majorRadius))
-                    .add(v.scale((float) Math.sin(majorAngle) * majorRadius));
+            float cosMajor = (float) Math.cos(majorAngle);
+            float sinMajor = (float) Math.sin(majorAngle);
+            Vec3 radial = u.scale(cosMajor).add(v.scale(sinMajor));
+            Vec3 ringCenter = center.add(radial.scale(majorRadius));
             for (int j = 0; j <= minor; j++) {
                 float minorAngle = (float) (2.0 * Math.PI * j / minor);
-                Vec3 point = ringCenter.add(normalizedAxis.scale((float) Math.cos(minorAngle) * minorRadius));
-                point = point.add(u.scale((float) Math.sin(minorAngle) * minorRadius * (float) Math.cos(majorAngle)));
-                point = point.add(v.scale((float) Math.sin(minorAngle) * minorRadius * (float) Math.sin(majorAngle)));
+                float cosMinor = (float) Math.cos(minorAngle);
+                float sinMinor = (float) Math.sin(minorAngle);
+                Vec3 point = ringCenter.add(radial.scale(cosMinor * minorRadius))
+                        .add(normalizedAxis.scale(sinMinor * minorRadius));
                 vertices.add(new MeshVertex(point, (float) i / major, (float) j / minor));
             }
         }

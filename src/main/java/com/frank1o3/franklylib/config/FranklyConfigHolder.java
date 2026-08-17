@@ -136,7 +136,7 @@ public final class FranklyConfigHolder<T> {
 
     /** Call once per game tick (client or server) to drive autosave and stale-file checks. */
     public void tick() {
-        if (dirty.get() && --ticksUntilAutosave <= 0) {
+        if (autosaveIntervalTicks > 0 && dirty.get() && --ticksUntilAutosave <= 0) {
             ticksUntilAutosave = autosaveIntervalTicks;
             saveIfDirty();
         }
@@ -195,7 +195,7 @@ public final class FranklyConfigHolder<T> {
         } catch (IOException e) {
             return;
         }
-        if (onDisk <= lastKnownModifiedMillis) {
+        if (lastKnownModifiedMillis >= 0 && onDisk <= lastKnownModifiedMillis) {
             return;
         }
         reloadFromDisk();
@@ -243,7 +243,7 @@ public final class FranklyConfigHolder<T> {
         try {
             lastKnownModifiedMillis = Files.getLastModifiedTime(path).toMillis();
         } catch (IOException ignored) {
-            lastKnownModifiedMillis = System.currentTimeMillis();
+            lastKnownModifiedMillis = -1;
         }
     }
 
@@ -256,7 +256,7 @@ public final class FranklyConfigHolder<T> {
         try {
             lastKnownModifiedMillis = Files.getLastModifiedTime(path).toMillis();
         } catch (IOException ignored) {
-            lastKnownModifiedMillis = System.currentTimeMillis();
+            lastKnownModifiedMillis = -1;
         }
         reloadListeners.forEach(listener -> listener.accept(reloaded));
     }

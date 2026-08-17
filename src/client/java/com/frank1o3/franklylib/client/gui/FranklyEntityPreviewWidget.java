@@ -47,6 +47,10 @@ public class FranklyEntityPreviewWidget extends AbstractWidget {
                 0xFFFFFFFF, 0xFFFFFFFF, 0, 0, FranklyUiStyle.BorderType.NONE, 0, 0))
                 .drawBox(graphics, getX(), getY(), width, height, isHoveredOrFocused(), active);
         if (entity == null) {
+            net.minecraft.client.gui.Font font = net.minecraft.client.Minecraft.getInstance().font;
+            Component noEntityText = Component.literal("—");
+            graphics.text(font, noEntityText, getX() + (width - font.width(noEntityText)) / 2,
+                    getY() + (height - font.lineHeight) / 2, 0x88FFFFFF, false);
             return;
         }
         // Orbiting works by feeding a shifted fake cursor X into the "face the mouse"

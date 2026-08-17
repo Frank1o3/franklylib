@@ -135,7 +135,11 @@ public class FranklyDropdown<T> extends AbstractWidget {
         }
 
         // Click on main button -> toggle dropdown
-        expanded = !expanded;
+        if (mouseX >= getX() && mouseX < getRight() && mouseY >= getY() && mouseY < getBottom()) {
+            expanded = !expanded;
+        } else {
+            expanded = false;
+        }
     }
 
     @Override

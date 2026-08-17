@@ -8,6 +8,11 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyle;
+import com.frank1o3.franklylib.client.gui.style.FranklyUiStyles;
+import com.mojang.blaze3d.platform.cursor.CursorTypes;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -20,7 +25,6 @@ public class FranklyTabBar<T> extends AbstractWidget {
     private final List<T> tabs;
     private final Function<T, Component> labelMapper;
     private final Consumer<T> onSelect;
-    private final List<FranklyButton> buttons = new ArrayList<>();
     private T current;
     private final @Nullable Identifier style;
 
@@ -54,28 +58,30 @@ public class FranklyTabBar<T> extends AbstractWidget {
 
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-        buttons.clear();
         int segmentWidth = tabs.isEmpty() ? width : width / tabs.size();
+        Font font = Minecraft.getInstance().font;
+        FranklyUiStyle uiStyle = FranklyUiStyles.resolve(style,
+                new FranklyUiStyle(0x54_444444, 0x54_666666, 0x54_222222, 0, 0xFF_FFFFFF, 0xFF_666666, 0, 2,
+                        FranklyUiStyle.BorderType.NONE, 0, 0));
+
         for (int i = 0; i < tabs.size(); i++) {
             T tab = tabs.get(i);
             int x = getX() + i * segmentWidth;
             int tabWidth = i == tabs.size() - 1 ? getX() + width - x : segmentWidth;
-            FranklyButton button = FranklyButton.builder()
-                    .bounds(x, getY(), tabWidth, getHeight())
-                    .message(labelMapper.apply(tab))
-                    .active(!tab.equals(current))
-                    .onPress(btn -> {
-                        current = tab;
-                        onSelect.accept(tab);
-                    })
-                    .style(style)
-                    .build();
-            button.setX(x);
-            button.setY(getY());
-            button.setWidth(tabWidth);
-            button.setHeight(getHeight());
-            buttons.add(button);
-            button.extractContents(graphics, mouseX, mouseY, delta);
+            boolean tabActive = !tab.equals(current);
+            boolean hovered = mouseX >= x && mouseX < x + tabWidth && mouseY >= getY() && mouseY < getY() + getHeight();
+
+            uiStyle.drawBox(graphics, x, getY(), tabWidth, getHeight(), hovered, tabActive);
+
+            int textColor = uiStyle.text(tabActive);
+            int left = x + uiStyle.padding();
+            int right = x + tabWidth - uiStyle.padding();
+            FranklyGuiUtils.drawFittedText(FranklyGuiUtils.Justify.CENTER, graphics, font, labelMapper.apply(tab),
+                    left, getY(), right, getY() + getHeight(), textColor);
+
+            if (hovered) {
+                graphics.requestCursor(tabActive ? CursorTypes.POINTING_HAND : CursorTypes.NOT_ALLOWED);
+            }
         }
     }
 
