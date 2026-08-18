@@ -14,7 +14,7 @@
 	},
 	"license": "BSD 3-Clause",
 	"icon": "assets/franklylib/icon.png",
-	"environment": "client",
+	"environment": "*",
 	"entrypoints": {
 		"main": [
 			"com.frank1o3.franklylib.FranklyLib"
