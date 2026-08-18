@@ -8,12 +8,9 @@ on:
       - completed
   workflow_dispatch: {}
 
-permissions:
-  contents: write
-
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, docker, cachyos, arch]
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Checkout source
@@ -28,16 +25,5 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Publish to local repo directory
-        run: ./gradlew publish
-
-      - name: Deploy to gh-pages
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: build/repo
-          branch: gh-pages
-          target-folder: maven
-          # `clean: false` so older versions already published to gh-pages aren't
-          # deleted every time — Maven repos are additive, each version needs to
-          # stay resolvable for anyone still depending on it.
-          clean: false
+      - name: Publish to Reposilite
+        run: ./gradlew publish -DreposiliteUsername=${{ secrets.REPOSILITE_USERNAME }} -DreposilitePassword=${{ secrets.REPOSILITE_PASSWORD }}

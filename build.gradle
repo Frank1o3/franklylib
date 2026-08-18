@@ -6,6 +6,10 @@ plugins {
 version = project.mod_version
 group = project.maven_group
 
+def reposiliteHost = System.getenv("GITHUB_ACTIONS") == "true"
+    ? "http://reposilite:8080"
+    : "http://cachyos-server:8080"
+
 repositories {
 	// Add repositories to retrieve artifacts from in here.
 	// You should only use this when depending on other mods because
@@ -83,13 +87,13 @@ publishing {
 
         maven {
             name = "Reposilite"
-            url = uri("http://cachyos-server:8080/frank1o3")
+            url = uri("${reposiliteHost}/frank1o3")
             allowInsecureProtocol = true
 
-            credentials {
+			credentials {
 				username = System.getProperty("reposiliteUsername")
 				password = System.getProperty("reposilitePassword")
-            }
+			}
         }
     }
 }
