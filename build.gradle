@@ -31,10 +31,6 @@ dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-
-	testImplementation platform('org.junit:junit-bom:6.1.2')
-	testImplementation "org.junit.jupiter:junit-jupiter:6.1.2"
-	testRuntimeOnly "org.junit.platform:junit-platform-launcher:6.1.2"
 }
 
 processResources {
@@ -51,9 +47,6 @@ tasks.withType(JavaCompile).configureEach {
 	it.options.compilerArgs.add("-Xlint:unchecked")
 }
 
-tasks.named('test', Test) {
-	useJUnitPlatform()
-}
 
 java {
 	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
