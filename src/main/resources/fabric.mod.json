@@ -8,8 +8,9 @@
 		"Frank1o3"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/Frank1o3/franklylib",
+		"sources": "https://github.com/Frank1o3/franklylib",
+		"issues": "https://github.com/Frank1o3/franklylib/issues"
 	},
 	"license": "BSD 3-Clause",
 	"icon": "assets/franklylib/icon.png",
@@ -31,6 +32,7 @@
 	"depends": {
 		"fabricloader": ">=0.19.3",
 		"minecraft": "~26.2",
+		"fabric-api": "*",
 		"java": ">=25"
 	}
 }

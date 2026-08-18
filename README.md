@@ -1,7 +1,7 @@
 # FranklyLib
 
-FranklyLib is a small, dependency-free [Fabric](https://fabricmc.net/) library mod that
-gives other mods two things:
+FranklyLib is a small [Fabric](https://fabricmc.net/) library mod (requiring only Fabric
+API alongside Fabric Loader) that gives other mods two things:
 
 1. **A cohesive custom GUI widget kit** — buttons, sliders, dropdowns, text boxes,
    checkboxes, and tab bars that all share one flat, semi-transparent visual language,
@@ -32,7 +32,7 @@ re-deriving "how do I draw a slider" or "how do I triangulate a sphere" from scr
 | Minecraft | 26.2 |
 | Loader | Fabric Loader ≥ 0.19.3 |
 | Java | 25+ |
-| Fabric API | **Not required.** FranklyLib only uses Fabric Loader (`net.fabricmc.api`), not Fabric API. |
+| Fabric API | **Required.** Some functionality (resource reload listeners, keybinding registration, networking) needs Fabric API, not just Fabric Loader. |
 
 ## Installation
 
@@ -97,7 +97,7 @@ FranklySlider slider = FranklySlider.builder()
         .build();
 ```
 
-See [`docs/gui-widgets.md`](docs/gui-widgets.md) for the full widget reference.
+See the [full widget reference](https://github.com/Frank1o3/franklylib/blob/main/docs/gui-widgets.md) for every widget.
 
 ### Mesh construction & rendering
 
@@ -115,7 +115,7 @@ FranklyAttachmentRenderer.render(
         light, overlay, color, partialTick);
 ```
 
-See [`docs/mesh-api.md`](docs/mesh-api.md) for the full mesh/rendering reference.
+See the [full mesh/rendering reference](https://github.com/Frank1o3/franklylib/blob/main/docs/mesh-api.md) for details.
 
 ### Config engine
 
@@ -129,8 +129,8 @@ FranklyConfigHolder<MyConfig> config = FranklyConfigHolder.builder(MyConfig.clas
         .build();
 ```
 
-See [`docs/config-engine.md`](docs/config-engine.md) for setup, lifecycle wiring,
-and the complete annotation/value-type reference.
+See the [full config engine reference](https://github.com/Frank1o3/franklylib/blob/main/docs/config-engine.md) for setup,
+lifecycle wiring, and the complete annotation/value-type reference.
 
 ## What this library is *not*
 
@@ -142,11 +142,11 @@ and the complete annotation/value-type reference.
 
 ## Documentation
 
-- [GUI widget reference](docs/gui-widgets.md)
-- [Mesh & rendering API reference](docs/mesh-api.md)
-- [Config engine reference](docs/config-engine.md)
+- [GUI widget reference](https://github.com/Frank1o3/franklylib/blob/main/docs/gui-widgets.md)
+- [Mesh & rendering API reference](https://github.com/Frank1o3/franklylib/blob/main/docs/mesh-api.md)
+- [Config engine reference](https://github.com/Frank1o3/franklylib/blob/main/docs/config-engine.md)
 
 ## License
 
-FranklyLib is released under [BSD 3-Clause](LICENSE) — public domain. Use it, fork it,
+FranklyLib is released under the [BSD 3-Clause License](https://github.com/Frank1o3/franklylib/blob/main/LICENSE) — public domain. Use it, fork it,
 strip it for parts, no attribution required.
