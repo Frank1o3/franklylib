@@ -45,7 +45,7 @@ dependency in your loom project:
 
 ```gradle
 repositories {
-    maven { url = 'https://frank1o3.github.io/franklylib/maven/' }
+    maven { url = 'https://repo-frank1o3.duckdns.org/' }
 }
 
 dependencies {
