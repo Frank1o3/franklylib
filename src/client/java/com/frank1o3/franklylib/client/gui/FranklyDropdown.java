@@ -10,8 +10,11 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import com.frank1o3.franklylib.client.gui.animation.FranklyUiAnimation;
+import com.frank1o3.franklylib.client.gui.animation.FranklyUiAnimations;
 import com.frank1o3.franklylib.client.gui.style.FranklyUiStyle;
 import com.frank1o3.franklylib.client.gui.style.FranklyUiStyles;
+import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -64,18 +67,26 @@ public class FranklyDropdown<T> extends AbstractWidget {
     @Override
     protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         updateExpansion();
-        FranklyButton.builder()
-                .bounds(getX(), getY(), getWidth(), getHeight())
-                .message(labelMapper.apply(current))
-                .onPress(btn -> expanded = !expanded)
-                .style(style)
-                .animation(animation)
-                .build()
-                .extractContents(graphics, mouseX, mouseY, delta);
-        Font font = Minecraft.getInstance().font;
+        FranklyUiAnimation frame = FranklyUiAnimations.beginTransform(graphics, this, animation,
+                isHoveredOrFocused(), active, getX() + getWidth() / 2f, getY() + getHeight() / 2f);
+
         FranklyUiStyle uiStyle = FranklyUiStyles.resolve(style, FranklyUiStyle.DEFAULT);
-        graphics.text(font, "▾", getX() + getWidth() - 14, getY() + (getHeight() - font.lineHeight) / 2, uiStyle.text(active),
+        uiStyle.withAlpha(frame.alpha()).drawBox(graphics, getX(), getY(), getWidth(), getHeight(), isHoveredOrFocused(), active);
+
+        Font font = Minecraft.getInstance().font;
+        int textColor = FranklyUiAnimations.applyAlpha(uiStyle.text(active), frame.alpha());
+        int left = getX() + uiStyle.padding();
+        int right = getX() + getWidth() - uiStyle.padding() - 14;
+        FranklyGuiUtils.drawFittedText(FranklyGuiUtils.Justify.LEFT, graphics, font, labelMapper.apply(current),
+                left, getY(), right, getY() + getHeight(), textColor);
+
+        graphics.text(font, "▾", getX() + getWidth() - 14, getY() + (getHeight() - font.lineHeight) / 2, textColor,
                 false);
+
+        if (isHovered()) {
+            graphics.requestCursor(active ? CursorTypes.POINTING_HAND : CursorTypes.NOT_ALLOWED);
+        }
+        FranklyUiAnimations.endTransform(graphics);
         if (expansionProgress > 0.001f) {
             int optionHeight = Math.max(14, getHeight());
             int listHeight = Math.min(options.size() * optionHeight, 140);

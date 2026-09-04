@@ -3,7 +3,7 @@
 	"id": "franklylib",
 	"version": "${version}",
 	"name": "FranklyLib",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "A reusable UI widget kit, 3D mesh construction/rendering API, and JSON config engine for Fabric mods.",
 	"authors": [
 		"Frank1o3"
 	],

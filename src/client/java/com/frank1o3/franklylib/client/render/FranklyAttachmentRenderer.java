@@ -44,10 +44,11 @@ public final class FranklyAttachmentRenderer {
                     attachment.localRotationEuler().x()));
         }
         poseStack.scale(attachment.localScale(), attachment.localScale(), attachment.localScale());
-        Vec3[] deformed = deformer != null ? deformer.deform(baseMesh, partialTick) : null;
-        if (deformed != null) {
+        Vec3[] positions = deformer != null ? deformer.deform(baseMesh, partialTick)
+                : MeshDeformer.IDENTITY.deform(baseMesh, partialTick);
+        if (positions != null) {
             renderQueue.submitCustomGeometry(poseStack, renderType,
-                    new CustomGeometryRenderCommand(baseMesh, deformed, light, overlay, color));
+                    new CustomGeometryRenderCommand(baseMesh, positions, light, overlay, color));
         }
         poseStack.popPose();
     }

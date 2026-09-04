@@ -8,8 +8,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
 
 /**
  * Submits a mesh's triangles as degenerate quads (Minecraft's entity vertex
@@ -76,21 +74,39 @@ public record CustomGeometryRenderCommand(
             Vec3 ab = pb.subtract(pa);
             Vec3 ac = pc.subtract(pa);
             Vec3 faceNormal = ab.cross(ac).normalize();
-            Vector3f defaultNormal = new Vector3f(faceNormal.x(), faceNormal.y(), faceNormal.z()).mul(matrix3f);
+            float defNx = matrix3f.m00() * faceNormal.x() + matrix3f.m10() * faceNormal.y() + matrix3f.m20() * faceNormal.z();
+            float defNy = matrix3f.m01() * faceNormal.x() + matrix3f.m11() * faceNormal.y() + matrix3f.m21() * faceNormal.z();
+            float defNz = matrix3f.m02() * faceNormal.x() + matrix3f.m12() * faceNormal.y() + matrix3f.m22() * faceNormal.z();
 
-            Vector3f na = a.normal() != null && !a.normal().equals(Vec3.ZERO)
-                    ? new Vector3f(a.normal().x(), a.normal().y(), a.normal().z()).mul(matrix3f)
-                    : defaultNormal;
-            Vector3f nb = b.normal() != null && !b.normal().equals(Vec3.ZERO)
-                    ? new Vector3f(b.normal().x(), b.normal().y(), b.normal().z()).mul(matrix3f)
-                    : defaultNormal;
-            Vector3f nc = c.normal() != null && !c.normal().equals(Vec3.ZERO)
-                    ? new Vector3f(c.normal().x(), c.normal().y(), c.normal().z()).mul(matrix3f)
-                    : defaultNormal;
+            float nax = (a.normal() != null && !a.normal().equals(Vec3.ZERO))
+                    ? (matrix3f.m00() * a.normal().x() + matrix3f.m10() * a.normal().y() + matrix3f.m20() * a.normal().z())
+                    : defNx;
+            float nay = (a.normal() != null && !a.normal().equals(Vec3.ZERO))
+                    ? (matrix3f.m01() * a.normal().x() + matrix3f.m11() * a.normal().y() + matrix3f.m21() * a.normal().z())
+                    : defNy;
+            float naz = (a.normal() != null && !a.normal().equals(Vec3.ZERO))
+                    ? (matrix3f.m02() * a.normal().x() + matrix3f.m12() * a.normal().y() + matrix3f.m22() * a.normal().z())
+                    : defNz;
 
-            Vector3f rna = new Vector3f(na).negate();
-            Vector3f rnb = new Vector3f(nb).negate();
-            Vector3f rnc = new Vector3f(nc).negate();
+            float nbx = (b.normal() != null && !b.normal().equals(Vec3.ZERO))
+                    ? (matrix3f.m00() * b.normal().x() + matrix3f.m10() * b.normal().y() + matrix3f.m20() * b.normal().z())
+                    : defNx;
+            float nby = (b.normal() != null && !b.normal().equals(Vec3.ZERO))
+                    ? (matrix3f.m01() * b.normal().x() + matrix3f.m11() * b.normal().y() + matrix3f.m21() * b.normal().z())
+                    : defNy;
+            float nbz = (b.normal() != null && !b.normal().equals(Vec3.ZERO))
+                    ? (matrix3f.m02() * b.normal().x() + matrix3f.m12() * b.normal().y() + matrix3f.m22() * b.normal().z())
+                    : defNz;
+
+            float ncx = (c.normal() != null && !c.normal().equals(Vec3.ZERO))
+                    ? (matrix3f.m00() * c.normal().x() + matrix3f.m10() * c.normal().y() + matrix3f.m20() * c.normal().z())
+                    : defNx;
+            float ncy = (c.normal() != null && !c.normal().equals(Vec3.ZERO))
+                    ? (matrix3f.m01() * c.normal().x() + matrix3f.m11() * c.normal().y() + matrix3f.m21() * c.normal().z())
+                    : defNy;
+            float ncz = (c.normal() != null && !c.normal().equals(Vec3.ZERO))
+                    ? (matrix3f.m02() * c.normal().x() + matrix3f.m12() * c.normal().y() + matrix3f.m22() * c.normal().z())
+                    : defNz;
 
             // Entity render types use QUADS, not a triangle-list primitive.
             // Submit every triangle as a degenerate quad so the next triangle
@@ -99,10 +115,10 @@ public record CustomGeometryRenderCommand(
             // plus unrelated UV samples to bleed onto the mesh.
 
             // Front winding (a, b, c) — matches the mesh's authored index order.
-            submitVertex(vertexConsumer, matrix4f, pa, a.u(), a.v(), na);
-            submitVertex(vertexConsumer, matrix4f, pb, b.u(), b.v(), nb);
-            submitVertex(vertexConsumer, matrix4f, pc, c.u(), c.v(), nc);
-            submitVertex(vertexConsumer, matrix4f, pc, c.u(), c.v(), nc);
+            submitVertex(vertexConsumer, matrix4f, pa, a.u(), a.v(), nax, nay, naz);
+            submitVertex(vertexConsumer, matrix4f, pb, b.u(), b.v(), nbx, nby, nbz);
+            submitVertex(vertexConsumer, matrix4f, pc, c.u(), c.v(), ncx, ncy, ncz);
+            submitVertex(vertexConsumer, matrix4f, pc, c.u(), c.v(), ncx, ncy, ncz);
 
             // Reversed winding (a, c, b) with a flipped normal — guarantees this
             // triangle is still visible if the render type culls backfaces and
@@ -110,17 +126,21 @@ public record CustomGeometryRenderCommand(
             // what actually fixes "randomly missing triangle" artifacts on
             // procedural/curved meshes, at the cost of ~2x vertices for custom
             // geometry submissions.
-            submitVertex(vertexConsumer, matrix4f, pa, a.u(), a.v(), rna);
-            submitVertex(vertexConsumer, matrix4f, pc, c.u(), c.v(), rnc);
-            submitVertex(vertexConsumer, matrix4f, pb, b.u(), b.v(), rnb);
-            submitVertex(vertexConsumer, matrix4f, pb, b.u(), b.v(), rnb);
+            submitVertex(vertexConsumer, matrix4f, pa, a.u(), a.v(), -nax, -nay, -naz);
+            submitVertex(vertexConsumer, matrix4f, pc, c.u(), c.v(), -ncx, -ncy, -ncz);
+            submitVertex(vertexConsumer, matrix4f, pb, b.u(), b.v(), -nbx, -nby, -nbz);
+            submitVertex(vertexConsumer, matrix4f, pb, b.u(), b.v(), -nbx, -nby, -nbz);
         }
     }
 
     private void submitVertex(VertexConsumer vertexConsumer, Matrix4f matrix4f, Vec3 position, float u, float v,
-            Vector3f normal) {
-        Vector4f transformed = new Vector4f(position.x(), position.y(), position.z(), 1.0F).mul(matrix4f);
-        vertexConsumer.addVertex(transformed.x(), transformed.y(), transformed.z(), color, u, v, overlay, light,
-                normal.x(), normal.y(), normal.z());
+            float nx, float ny, float nz) {
+        float px = position.x();
+        float py = position.y();
+        float pz = position.z();
+        float tx = matrix4f.m00() * px + matrix4f.m10() * py + matrix4f.m20() * pz + matrix4f.m30();
+        float ty = matrix4f.m01() * px + matrix4f.m11() * py + matrix4f.m21() * pz + matrix4f.m31();
+        float tz = matrix4f.m02() * px + matrix4f.m12() * py + matrix4f.m22() * pz + matrix4f.m32();
+        vertexConsumer.addVertex(tx, ty, tz, color, u, v, overlay, light, nx, ny, nz);
     }
 }

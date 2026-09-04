@@ -53,7 +53,9 @@ public final class FranklyGuiUtils {
      */
     public static void drawFittedText(Justify justify, GuiGraphicsExtractor graphics, Font font,
             Component text, int left, int top, int right, int bottom, int color) {
-        color = ARGB.opaque(color);
+        if ((color >>> 24) == 0) {
+            color = ARGB.opaque(color);
+        }
         int textWidth = font.width(text);
         int textY = (top + bottom - font.lineHeight) / 2;
         int available = right - left;
