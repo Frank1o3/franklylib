@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * }</pre>
  */
 @Environment(EnvType.CLIENT)
-public class FranklyButton extends Button {
+public class FranklyButton extends Button implements FranklyDepthAware {
 
     private static final int COLOR_BG = 0x54_444444;
     private static final int COLOR_BG_HOVER = 0x54_666666;
@@ -42,12 +42,24 @@ public class FranklyButton extends Button {
     private static final int COLOR_TEXT_DISABLED = 0xFF_666666;
     private final @Nullable Identifier animation;
     private final @Nullable Identifier style;
+    private int zIndex;
 
     private FranklyButton(int x, int y, int width, int height, Component message, OnPress onPress,
-            @Nullable Identifier animation, @Nullable Identifier style) {
+            @Nullable Identifier animation, @Nullable Identifier style, int zIndex) {
         super(x, y, width, height, message, onPress, DEFAULT_NARRATION);
         this.animation = animation;
         this.style = style;
+        this.zIndex = zIndex;
+    }
+
+    @Override
+    public int getZIndex() {
+        return zIndex;
+    }
+
+    @Override
+    public void setZIndex(int zIndex) {
+        this.zIndex = zIndex;
     }
 
     @Override
@@ -89,6 +101,7 @@ public class FranklyButton extends Button {
         private boolean active = true;
         private @Nullable Identifier animation;
         private @Nullable Identifier style;
+        private @Nullable Integer zIndex;
 
         private Builder() {
         }
@@ -131,11 +144,19 @@ public class FranklyButton extends Button {
             return this;
         }
 
+        /** Sets the z-index depth of this button. */
+        public Builder zIndex(int zIndex) {
+            this.zIndex = zIndex;
+            return this;
+        }
+
         public FranklyButton build() {
             Component msg = message != null ? message : Component.empty();
             OnPress press = onPress != null ? onPress : btn -> {
             };
-            FranklyButton button = new FranklyButton(x, y, width, height, msg, press, animation, style);
+            int resolvedZIndex = this.zIndex != null ? this.zIndex
+                    : (style != null ? FranklyUiStyles.resolve(style, FranklyUiStyle.DEFAULT).zIndex() : 0);
+            FranklyButton button = new FranklyButton(x, y, width, height, msg, press, animation, style, resolvedZIndex);
             button.active = active;
             return button;
         }

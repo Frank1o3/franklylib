@@ -56,7 +56,7 @@ import java.util.function.Function;
  * }</pre>
  */
 @Environment(EnvType.CLIENT)
-public final class FranklySlider extends AbstractWidget {
+public final class FranklySlider extends AbstractWidget implements FranklyDepthAware {
 
     // -------------------------------------------------------------------------
     // Visual constants
@@ -137,11 +137,25 @@ public final class FranklySlider extends AbstractWidget {
         };
         this.animation = b.animation;
         this.style = b.style;
+        this.zIndex = b.zIndex != null ? b.zIndex
+                : (b.style != null ? FranklyUiStyles.resolve(b.style, FranklyUiStyle.DEFAULT).zIndex() : 0);
 
         // Set initial normalised position (clamped + snapped).
         setNormalized(toNormalized(snapToStep(Mth.clamp(b.initialValue, min, max))));
         // Synchronise the widget message so narration works from the start.
         refreshMessage();
+    }
+
+    private int zIndex;
+
+    @Override
+    public int getZIndex() {
+        return zIndex;
+    }
+
+    @Override
+    public void setZIndex(int zIndex) {
+        this.zIndex = zIndex;
     }
 
     // =========================================================================
@@ -548,6 +562,14 @@ public final class FranklySlider extends AbstractWidget {
         /** Applies a resource-pack style, e.g. {@code modid:settings_slider}. */
         public Builder style(@Nullable Identifier style) {
             this.style = style;
+            return this;
+        }
+
+        private @Nullable Integer zIndex;
+
+        /** Sets the z-index depth of this slider. */
+        public Builder zIndex(int zIndex) {
+            this.zIndex = zIndex;
             return this;
         }
     }

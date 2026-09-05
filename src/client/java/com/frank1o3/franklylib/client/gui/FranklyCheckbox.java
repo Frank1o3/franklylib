@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 @Environment(EnvType.CLIENT)
-public class FranklyCheckbox extends AbstractWidget {
+public class FranklyCheckbox extends AbstractWidget implements FranklyDepthAware {
     private static final int COLOR_BG = 0x54_444444;
     private static final int COLOR_BG_HOVER = 0x54_666666;
     private static final int COLOR_BG_DISABLED = 0x54_222222;
@@ -32,15 +32,27 @@ public class FranklyCheckbox extends AbstractWidget {
     private final Consumer<Boolean> onToggle;
     private boolean checked;
     private final @Nullable Identifier style;
+    private int zIndex;
 
     private FranklyCheckbox(int x, int y, int width, int height, Component label, boolean checked,
-            Consumer<Boolean> onToggle, @Nullable Identifier style) {
+            Consumer<Boolean> onToggle, @Nullable Identifier style, int zIndex) {
         super(x, y, width, height, Component.empty());
         this.label = label;
         this.checked = checked;
         this.onToggle = onToggle != null ? onToggle : value -> {
         };
         this.style = style;
+        this.zIndex = zIndex;
+    }
+
+    @Override
+    public int getZIndex() {
+        return zIndex;
+    }
+
+    @Override
+    public void setZIndex(int zIndex) {
+        this.zIndex = zIndex;
     }
 
     public boolean isChecked() {
@@ -110,6 +122,7 @@ public class FranklyCheckbox extends AbstractWidget {
         private boolean checked;
         private @Nullable Consumer<Boolean> onToggle;
         private @Nullable Identifier style;
+        private @Nullable Integer zIndex;
 
         public Builder bounds(int x, int y, int width, int height) {
             this.x = x;
@@ -139,8 +152,16 @@ public class FranklyCheckbox extends AbstractWidget {
             return this;
         }
 
+        /** Sets the z-index depth of this checkbox. */
+        public Builder zIndex(int zIndex) {
+            this.zIndex = zIndex;
+            return this;
+        }
+
         public FranklyCheckbox build() {
-            return new FranklyCheckbox(x, y, width, height, label, checked, onToggle, style);
+            int resolvedZIndex = this.zIndex != null ? this.zIndex
+                    : (style != null ? FranklyUiStyles.resolve(style, FranklyUiStyle.DEFAULT).zIndex() : 0);
+            return new FranklyCheckbox(x, y, width, height, label, checked, onToggle, style, resolvedZIndex);
         }
     }
 }

@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 @Environment(EnvType.CLIENT)
-public class FranklyDropdown<T> extends AbstractWidget {
+public class FranklyDropdown<T> extends AbstractWidget implements FranklyDepthAware {
     private final List<T> options;
     private final Function<T, Component> labelMapper;
     private final Consumer<T> onSelect;
@@ -32,10 +32,11 @@ public class FranklyDropdown<T> extends AbstractWidget {
     private long expansionUpdatedAt = System.nanoTime();
     private final @Nullable Identifier animation;
     private final @Nullable Identifier style;
+    private int zIndex;
 
     private FranklyDropdown(int x, int y, int width, int height, List<T> options, T current,
             Function<T, Component> labelMapper, Consumer<T> onSelect, @Nullable Identifier style,
-            @Nullable Identifier animation) {
+            @Nullable Identifier animation, int zIndex) {
         super(x, y, width, height, Component.empty());
         this.options = List.copyOf(options);
         this.current = current;
@@ -44,6 +45,7 @@ public class FranklyDropdown<T> extends AbstractWidget {
         };
         this.style = style;
         this.animation = animation;
+        this.zIndex = zIndex;
     }
 
     public T getCurrent() {
@@ -128,6 +130,37 @@ public class FranklyDropdown<T> extends AbstractWidget {
     }
 
     @Override
+    public int getZIndex() {
+        // When expanded or animating, pop up into the overlay layer (+1000) so the dropdown list draws on top
+        if (expanded || expansionProgress > 0.001f) {
+            return zIndex + 1000;
+        }
+        return zIndex;
+    }
+
+    @Override
+    public void setZIndex(int zIndex) {
+        this.zIndex = zIndex;
+    }
+
+    public int getBaseZIndex() {
+        return zIndex;
+    }
+
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (!this.active || !this.visible) {
+            return false;
+        }
+        // If clicking outside an expanded dropdown, close it and let the click interact with the underlying target
+        if (expanded && !isMouseOver(event.x(), event.y())) {
+            expanded = false;
+            return false;
+        }
+        return super.mouseClicked(event, doubleClick);
+    }
+
+    @Override
     public void onClick(MouseButtonEvent event, boolean doubleClick) {
         double mouseX = event.x();
         double mouseY = event.y();
@@ -173,6 +206,7 @@ public class FranklyDropdown<T> extends AbstractWidget {
         private @Nullable Consumer<T> onSelect;
         private @Nullable Identifier style;
         private @Nullable Identifier animation;
+        private @Nullable Integer zIndex;
 
         public Builder<T> bounds(int x, int y, int width, int height) {
             this.x = x;
@@ -207,6 +241,12 @@ public class FranklyDropdown<T> extends AbstractWidget {
             return this;
         }
 
+        /** Sets the base z-index depth of this dropdown. */
+        public Builder<T> zIndex(int zIndex) {
+            this.zIndex = zIndex;
+            return this;
+        }
+
         /** Applies the same optional transform animation used by buttons. */
         public Builder<T> animation(@Nullable Identifier animation) {
             this.animation = animation;
@@ -214,7 +254,9 @@ public class FranklyDropdown<T> extends AbstractWidget {
         }
 
         public FranklyDropdown<T> build() {
-            return new FranklyDropdown<>(x, y, width, height, options, current, labelMapper, onSelect, style, animation);
+            int resolvedZIndex = this.zIndex != null ? this.zIndex
+                    : (style != null ? FranklyUiStyles.resolve(style, FranklyUiStyle.DEFAULT).zIndex() : 0);
+            return new FranklyDropdown<>(x, y, width, height, options, current, labelMapper, onSelect, style, animation, resolvedZIndex);
         }
     }
 }

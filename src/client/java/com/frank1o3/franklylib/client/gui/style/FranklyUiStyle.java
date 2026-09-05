@@ -12,10 +12,19 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 @Environment(EnvType.CLIENT)
 public record FranklyUiStyle(int background, int hoverBackground, int disabledBackground,
         int borderColor, int textColor, int disabledTextColor, int accentColor,
-        int padding, BorderType borderType, int borderRadius, int borderWidth) {
+        int padding, BorderType borderType, int borderRadius, int borderWidth,
+        int zIndex) {
+
+    public FranklyUiStyle(int background, int hoverBackground, int disabledBackground,
+            int borderColor, int textColor, int disabledTextColor, int accentColor,
+            int padding, BorderType borderType, int borderRadius, int borderWidth) {
+        this(background, hoverBackground, disabledBackground, borderColor, textColor, disabledTextColor, accentColor,
+                padding, borderType, borderRadius, borderWidth, 0);
+    }
+
     public static final FranklyUiStyle DEFAULT = new FranklyUiStyle(
             0x54444444, 0x54666666, 0x54222222, 0xFFBBBBBB,
-            0xFFFFFFFF, 0xFF666666, 0xFF66CC66, 2, BorderType.SQUARE, 0, 1);
+            0xFFFFFFFF, 0xFF666666, 0xFF66CC66, 2, BorderType.SQUARE, 0, 1, 0);
 
     public enum BorderType { NONE, SQUARE, ROUNDED }
 
@@ -32,7 +41,13 @@ public record FranklyUiStyle(int background, int hoverBackground, int disabledBa
         return new FranklyUiStyle(applyAlpha(background, alpha), applyAlpha(hoverBackground, alpha),
                 applyAlpha(disabledBackground, alpha), applyAlpha(borderColor, alpha), applyAlpha(textColor, alpha),
                 applyAlpha(disabledTextColor, alpha), applyAlpha(accentColor, alpha), padding, borderType,
-                borderRadius, borderWidth);
+                borderRadius, borderWidth, zIndex);
+    }
+
+    /** Returns a copy of this style with the given z-index. */
+    public FranklyUiStyle withZIndex(int zIndex) {
+        return new FranklyUiStyle(background, hoverBackground, disabledBackground, borderColor, textColor,
+                disabledTextColor, accentColor, padding, borderType, borderRadius, borderWidth, zIndex);
     }
 
     /** Draws a fill and optional border using only vanilla GUI primitives. */

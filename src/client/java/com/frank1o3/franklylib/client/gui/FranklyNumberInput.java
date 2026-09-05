@@ -53,7 +53,7 @@ import java.util.function.Function;
  * }</pre>
  */
 @Environment(EnvType.CLIENT)
-public class FranklyNumberInput extends AbstractWidget {
+public class FranklyNumberInput extends AbstractWidget implements FranklyDepthAware {
 
     // -------------------------------------------------------------------------
     // Visual constants (matching FranklyTextBox)
@@ -115,12 +115,26 @@ public class FranklyNumberInput extends AbstractWidget {
         };
         this.animation = b.animation;
         this.style = b.style;
+        this.zIndex = b.zIndex != null ? b.zIndex
+                : (b.style != null ? FranklyUiStyles.resolve(b.style, FranklyUiStyle.DEFAULT).zIndex() : 0);
 
         this.value = Mth.clamp(b.initialValue, minValue, maxValue);
         this.editingText = null;
         this.cursorPos = 0;
         this.hasUncommittedChange = false;
         refreshMessage();
+    }
+
+    private int zIndex;
+
+    @Override
+    public int getZIndex() {
+        return zIndex;
+    }
+
+    @Override
+    public void setZIndex(int zIndex) {
+        this.zIndex = zIndex;
     }
 
     // =========================================================================
@@ -531,6 +545,7 @@ public class FranklyNumberInput extends AbstractWidget {
         private Consumer<Double> onValueCommitted;
         private @Nullable Identifier animation;
         private @Nullable Identifier style;
+        private @Nullable Integer zIndex;
 
         private Builder() {
         }
@@ -542,6 +557,12 @@ public class FranklyNumberInput extends AbstractWidget {
 
         public Builder style(@Nullable Identifier style) {
             this.style = style;
+            return this;
+        }
+
+        /** Sets the z-index depth of this number input. */
+        public Builder zIndex(int zIndex) {
+            this.zIndex = zIndex;
             return this;
         }
 

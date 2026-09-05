@@ -34,7 +34,7 @@ import java.util.List;
  * </p>
  */
 @Environment(EnvType.CLIENT)
-public class FranklyScrollPanel extends AbstractWidget {
+public class FranklyScrollPanel extends AbstractWidget implements FranklyDepthAware {
     private static final int COLOR_BG = 0x33_000000;
     private static final int SCROLLBAR_TRACK = 0x33_000000;
     private static final int SCROLLBAR_THUMB = 0x88_AAAAAA;
@@ -46,6 +46,7 @@ public class FranklyScrollPanel extends AbstractWidget {
     private double scrollAmount;
     private @Nullable AbstractWidget focused;
     private @Nullable Identifier style;
+    private int zIndex;
 
     private FranklyScrollPanel(int x, int y, int width, int height) {
         super(x, y, width, height, Component.empty());
@@ -58,7 +59,26 @@ public class FranklyScrollPanel extends AbstractWidget {
     /** Applies a resource-pack style to the panel background. */
     public FranklyScrollPanel style(@Nullable Identifier style) {
         this.style = style;
+        if (style != null && this.zIndex == 0) {
+            this.zIndex = FranklyUiStyles.resolve(style, FranklyUiStyle.DEFAULT).zIndex();
+        }
         return this;
+    }
+
+    /** Sets the z-index depth of this scroll panel. */
+    public FranklyScrollPanel zIndex(int zIndex) {
+        this.zIndex = zIndex;
+        return this;
+    }
+
+    @Override
+    public int getZIndex() {
+        return zIndex;
+    }
+
+    @Override
+    public void setZIndex(int zIndex) {
+        this.zIndex = zIndex;
     }
 
     public <T extends AbstractWidget> T addChild(T widget, int offsetY) {

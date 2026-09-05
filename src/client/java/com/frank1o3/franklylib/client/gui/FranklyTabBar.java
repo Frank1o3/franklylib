@@ -21,15 +21,16 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 @Environment(EnvType.CLIENT)
-public class FranklyTabBar<T> extends AbstractWidget {
+public class FranklyTabBar<T> extends AbstractWidget implements FranklyDepthAware {
     private final List<T> tabs;
     private final Function<T, Component> labelMapper;
     private final Consumer<T> onSelect;
     private T current;
     private final @Nullable Identifier style;
+    private int zIndex;
 
     private FranklyTabBar(int x, int y, int width, int height, List<T> tabs, Function<T, Component> labelMapper,
-            T current, Consumer<T> onSelect, @Nullable Identifier style) {
+            T current, Consumer<T> onSelect, @Nullable Identifier style, int zIndex) {
         super(x, y, width, height, Component.empty());
         this.tabs = new ArrayList<>(tabs);
         this.labelMapper = labelMapper != null ? labelMapper : tab -> Component.literal(String.valueOf(tab));
@@ -37,6 +38,17 @@ public class FranklyTabBar<T> extends AbstractWidget {
         this.onSelect = onSelect != null ? onSelect : value -> {
         };
         this.style = style;
+        this.zIndex = zIndex;
+    }
+
+    @Override
+    public int getZIndex() {
+        return zIndex;
+    }
+
+    @Override
+    public void setZIndex(int zIndex) {
+        this.zIndex = zIndex;
     }
 
     @Override
@@ -103,6 +115,7 @@ public class FranklyTabBar<T> extends AbstractWidget {
         private T current;
         private @Nullable Consumer<T> onSelect;
         private @Nullable Identifier style;
+        private @Nullable Integer zIndex;
 
         public Builder<T> bounds(int x, int y, int width, int height) {
             this.x = x;
@@ -137,8 +150,16 @@ public class FranklyTabBar<T> extends AbstractWidget {
             return this;
         }
 
+        /** Sets the z-index depth of this tab bar. */
+        public Builder<T> zIndex(int zIndex) {
+            this.zIndex = zIndex;
+            return this;
+        }
+
         public FranklyTabBar<T> build() {
-            return new FranklyTabBar<>(x, y, width, height, tabs, labelMapper, current, onSelect, style);
+            int resolvedZIndex = this.zIndex != null ? this.zIndex
+                    : (style != null ? FranklyUiStyles.resolve(style, FranklyUiStyle.DEFAULT).zIndex() : 0);
+            return new FranklyTabBar<>(x, y, width, height, tabs, labelMapper, current, onSelect, style, resolvedZIndex);
         }
     }
 }

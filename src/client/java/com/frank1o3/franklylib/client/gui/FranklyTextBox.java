@@ -22,11 +22,11 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 @Environment(EnvType.CLIENT)
-public class FranklyTextBox extends AbstractWidget {
+public class FranklyTextBox extends AbstractWidget implements FranklyDepthAware {
     private static final int COLOR_BG = 0x54_444444;
     private static final int COLOR_BORDER = 0xFF_BBBBBB;
     private static final int COLOR_TEXT = 0xFF_FFFFFF;
-    private static final int COLOR_CURSOR = 0xFF_FFFFFF;
+    private static final int COLOR_CURSOR = 0xFF_EEEEEE;
     private final Predicate<String> filter;
     private final int maxLength;
     private final Consumer<String> onChanged;
@@ -35,9 +35,11 @@ public class FranklyTextBox extends AbstractWidget {
     private int cursor;
     private int scrollOffset;
     private final @Nullable Identifier style;
+    private int zIndex;
 
     private FranklyTextBox(int x, int y, int width, int height, String initialValue, Predicate<String> filter,
-            int maxLength, Consumer<String> onChanged, Consumer<String> onSubmit, @Nullable Identifier style) {
+            int maxLength, Consumer<String> onChanged, Consumer<String> onSubmit, @Nullable Identifier style,
+            int zIndex) {
         super(x, y, width, height, Component.empty());
         this.value = initialValue == null ? "" : initialValue;
         this.filter = filter;
@@ -48,6 +50,17 @@ public class FranklyTextBox extends AbstractWidget {
         };
         this.cursor = this.value.length();
         this.style = style;
+        this.zIndex = zIndex;
+    }
+
+    @Override
+    public int getZIndex() {
+        return zIndex;
+    }
+
+    @Override
+    public void setZIndex(int zIndex) {
+        this.zIndex = zIndex;
     }
 
     public String getValue() {
@@ -237,13 +250,23 @@ public class FranklyTextBox extends AbstractWidget {
             return this;
         }
 
+        private @Nullable Integer zIndex;
+
         public Builder style(@Nullable Identifier style) {
             this.style = style;
             return this;
         }
 
+        /** Sets the z-index depth of this text box. */
+        public Builder zIndex(int zIndex) {
+            this.zIndex = zIndex;
+            return this;
+        }
+
         public FranklyTextBox build() {
-            return new FranklyTextBox(x, y, width, height, initialValue, filter, maxLength, onChanged, onSubmit, style);
+            int resolvedZIndex = this.zIndex != null ? this.zIndex
+                    : (style != null ? FranklyUiStyles.resolve(style, FranklyUiStyle.DEFAULT).zIndex() : 0);
+            return new FranklyTextBox(x, y, width, height, initialValue, filter, maxLength, onChanged, onSubmit, style, resolvedZIndex);
         }
     }
 }

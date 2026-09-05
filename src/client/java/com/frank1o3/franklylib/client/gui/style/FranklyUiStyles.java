@@ -77,13 +77,15 @@ public final class FranklyUiStyles {
                 case "rounded" -> FranklyUiStyle.BorderType.ROUNDED;
                 default -> FranklyUiStyle.BorderType.SQUARE;
             };
+            int zIndex = integer(root, "z_index", integer(root, "zIndex", base.zIndex()));
             return new FranklyUiStyle(
                     color(colors, "background", base.background()), color(colors, "hover_background", base.hoverBackground()),
                     color(colors, "disabled_background", base.disabledBackground()), color(colors, "border", base.borderColor()),
                     color(colors, "text", base.textColor()), color(colors, "disabled_text", base.disabledTextColor()),
                     color(colors, "accent", base.accentColor()), integer(root, "padding", base.padding()), borderType,
                     integer(border, "radius", integer(root, "border_radius", base.borderRadius())),
-                    Math.max(0, integer(border, "width", integer(root, "border_width", base.borderWidth()))));
+                    Math.max(0, integer(border, "width", integer(root, "border_width", base.borderWidth()))),
+                    zIndex);
         } catch (Exception exception) {
             FranklyLib.LOGGER.warn("Ignoring invalid UI style {}", id, exception);
             return null;

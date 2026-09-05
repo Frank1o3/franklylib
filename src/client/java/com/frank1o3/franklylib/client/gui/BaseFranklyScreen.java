@@ -8,7 +8,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import com.frank1o3.franklylib.client.gui.style.FranklyUiStyle;
 import com.frank1o3.franklylib.client.gui.style.FranklyUiStyles;
+import com.frank1o3.franklylib.client.mixin.accessors.ScreenAccessor;
+import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Common chrome shared by every Proportionality screen: a dimmed background
@@ -74,7 +81,43 @@ public abstract class BaseFranklyScreen extends Screen {
         // Subclasses can draw extra content (previews, labels) before widgets.
         renderPanelContent(graphics, px, py, mouseX, mouseY, delta);
 
-        super.extractRenderState(graphics, mouseX, mouseY, delta);
+        renderWidgetsWithZIndex(graphics, mouseX, mouseY, delta);
+    }
+
+    /**
+     * Renders child widgets in ascending z-index order so elements with higher
+     * z-index (such as expanded dropdowns) are drawn in front.
+     */
+    protected void renderWidgetsWithZIndex(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        List<Renderable> renderables;
+        try {
+            renderables = ((ScreenAccessor) this).getRenderables();
+        } catch (Throwable t) {
+            super.extractRenderState(graphics, mouseX, mouseY, delta);
+            return;
+        }
+
+        if (renderables == null || renderables.isEmpty()) {
+            return;
+        }
+
+        List<Renderable> sorted = new ArrayList<>(renderables);
+        sorted.sort(Comparator.comparingInt(FranklyDepthAware::getZIndex));
+        for (Renderable renderable : sorted) {
+            renderable.extractRenderState(graphics, mouseX, mouseY, delta);
+        }
+    }
+
+    @Override
+    public List<? extends GuiEventListener> children() {
+        List<? extends GuiEventListener> baseChildren = super.children();
+        if (baseChildren == null || baseChildren.size() <= 1) {
+            return baseChildren;
+        }
+        // Event dispatch tests front-to-back: elements with highest z-index receive clicks first
+        List<GuiEventListener> sorted = new ArrayList<>(baseChildren);
+        sorted.sort((a, b) -> Integer.compare(FranklyDepthAware.getZIndex(b), FranklyDepthAware.getZIndex(a)));
+        return sorted;
     }
 
     /**
