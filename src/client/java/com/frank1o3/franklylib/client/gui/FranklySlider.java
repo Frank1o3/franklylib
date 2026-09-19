@@ -16,7 +16,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import com.frank1o3.franklylib.client.gui.animation.FranklyUiAnimation;
 import com.frank1o3.franklylib.client.gui.animation.FranklyUiAnimations;
@@ -281,25 +281,25 @@ public final class FranklySlider extends AbstractWidget implements FranklyDepthA
     @Override
     public boolean keyPressed(KeyEvent event) {
         int key = event.key();
-        if (key == GLFW.GLFW_KEY_LEFT) {
+        if (key == InputConstants.KEY_LEFT) {
             nudge(-1.0);
             return true;
         }
-        if (key == GLFW.GLFW_KEY_RIGHT) {
+        if (key == InputConstants.KEY_RIGHT) {
             nudge(1.0);
             return true;
         }
-        if (key == GLFW.GLFW_KEY_HOME) {
+        if (key == InputConstants.KEY_HOME) {
             applyNormAndNotify(0.0);
             commit();
             return true;
         }
-        if (key == GLFW.GLFW_KEY_END) {
+        if (key == InputConstants.KEY_END) {
             applyNormAndNotify(1.0);
             commit();
             return true;
         }
-        if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) {
+        if (key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER) {
             commit();
             return true;
         }
@@ -309,7 +309,7 @@ public final class FranklySlider extends AbstractWidget implements FranklyDepthA
     @Override
     public boolean keyReleased(KeyEvent event) {
         int key = event.key();
-        if (key == GLFW.GLFW_KEY_LEFT || key == GLFW.GLFW_KEY_RIGHT) {
+        if (key == InputConstants.KEY_LEFT || key == InputConstants.KEY_RIGHT) {
             commit();
             return true;
         }

@@ -1,5 +1,7 @@
 package com.frank1o3.franklylib.client.render;
 
+import org.joml.Matrix4f;
+
 import com.frank1o3.franklylib.Mesh;
 import com.frank1o3.franklylib.MeshDeformer;
 import com.frank1o3.franklylib.Vec3;
@@ -35,15 +37,23 @@ public final class FranklyAttachmentRenderer {
         if (target != null) {
             target.translateAndRotate(poseStack);
         }
-        poseStack.translate(attachment.localOffset().x(), attachment.localOffset().y(),
+        poseStack.translate(
+                attachment.localOffset().x(),
+                attachment.localOffset().y(),
                 attachment.localOffset().z());
-        if (attachment.localRotationEuler() != null && !attachment.localRotationEuler().equals(Vec3.ZERO)) {
-            poseStack.mulPose(new org.joml.Quaternionf().rotationZYX(
+
+        if (attachment.localRotationEuler() != null
+                && !attachment.localRotationEuler().equals(Vec3.ZERO)) {
+            poseStack.mulPose(new Matrix4f().rotationZYX(
                     attachment.localRotationEuler().z(),
                     attachment.localRotationEuler().y(),
                     attachment.localRotationEuler().x()));
         }
-        poseStack.scale(attachment.localScale(), attachment.localScale(), attachment.localScale());
+
+        poseStack.scale(
+                attachment.localScale(),
+                attachment.localScale(),
+                attachment.localScale());
         Vec3[] positions = deformer != null ? deformer.deform(baseMesh, partialTick)
                 : MeshDeformer.IDENTITY.deform(baseMesh, partialTick);
         if (positions != null) {

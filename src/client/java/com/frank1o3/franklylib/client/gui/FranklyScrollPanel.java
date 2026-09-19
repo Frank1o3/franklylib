@@ -14,7 +14,7 @@ import net.minecraft.util.Mth;
 import com.frank1o3.franklylib.client.gui.style.FranklyUiStyle;
 import com.frank1o3.franklylib.client.gui.style.FranklyUiStyles;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -186,12 +186,12 @@ public class FranklyScrollPanel extends AbstractWidget implements FranklyDepthAw
         if (focused != null && focused.keyPressed(event)) {
             return true;
         }
-        if (event.key() == GLFW.GLFW_KEY_PAGE_UP) {
+        if (event.key() == InputConstants.KEY_PAGEUP) {
             scrollAmount = Math.max(0, scrollAmount - height);
             layoutChildren();
             return true;
         }
-        if (event.key() == GLFW.GLFW_KEY_PAGE_DOWN) {
+        if (event.key() == InputConstants.KEY_PAGEDOWN) {
             scrollAmount = Math.min(maxScroll(), scrollAmount + height);
             layoutChildren();
             return true;

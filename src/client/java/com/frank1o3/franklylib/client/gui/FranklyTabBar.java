@@ -98,6 +98,12 @@ public class FranklyTabBar<T> extends AbstractWidget implements FranklyDepthAwar
     }
 
     @Override
+    public void setFocused(boolean focused) {
+        super.setFocused(focused);
+        Minecraft.getInstance().onTextInputFocusChange(this, focused);
+    }
+
+    @Override
     public void updateWidgetNarration(NarrationElementOutput output) {
     }
 
@@ -159,7 +165,8 @@ public class FranklyTabBar<T> extends AbstractWidget implements FranklyDepthAwar
         public FranklyTabBar<T> build() {
             int resolvedZIndex = this.zIndex != null ? this.zIndex
                     : (style != null ? FranklyUiStyles.resolve(style, FranklyUiStyle.DEFAULT).zIndex() : 0);
-            return new FranklyTabBar<>(x, y, width, height, tabs, labelMapper, current, onSelect, style, resolvedZIndex);
+            return new FranklyTabBar<>(x, y, width, height, tabs, labelMapper, current, onSelect, style,
+                    resolvedZIndex);
         }
     }
 }

@@ -17,7 +17,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import com.frank1o3.franklylib.client.gui.animation.FranklyUiAnimation;
 import com.frank1o3.franklylib.client.gui.animation.FranklyUiAnimations;
@@ -319,21 +319,21 @@ public class FranklyNumberInput extends AbstractWidget implements FranklyDepthAw
 
         int key = event.key();
 
-        if (key == GLFW.GLFW_KEY_UP) {
+        if (key == InputConstants.KEY_UP) {
             adjustBy(step);
             commit();
             return true;
         }
-        if (key == GLFW.GLFW_KEY_DOWN) {
+        if (key == InputConstants.KEY_DOWN) {
             adjustBy(-step);
             commit();
             return true;
         }
-        if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) {
+        if (key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER) {
             commit();
             return true;
         }
-        if (key == GLFW.GLFW_KEY_ESCAPE) {
+        if (key == InputConstants.KEY_ESCAPE) {
             // Cancel editing, revert to current value
             editingText = null;
             setFocused(false);
@@ -346,7 +346,7 @@ public class FranklyNumberInput extends AbstractWidget implements FranklyDepthAw
             cursorPos = editingText.length();
         }
 
-        if (key == GLFW.GLFW_KEY_BACKSPACE) {
+        if (key == InputConstants.KEY_BACKSPACE) {
             if (cursorPos > 0) {
                 editingText = editingText.substring(0, cursorPos - 1) + editingText.substring(cursorPos);
                 cursorPos--;
@@ -354,26 +354,26 @@ public class FranklyNumberInput extends AbstractWidget implements FranklyDepthAw
             }
             return true;
         }
-        if (key == GLFW.GLFW_KEY_DELETE) {
+        if (key == InputConstants.KEY_DELETE) {
             if (cursorPos < editingText.length()) {
                 editingText = editingText.substring(0, cursorPos) + editingText.substring(cursorPos + 1);
                 updateFromEditingText();
             }
             return true;
         }
-        if (key == GLFW.GLFW_KEY_LEFT) {
+        if (key == InputConstants.KEY_LEFT) {
             cursorPos = Math.max(0, cursorPos - 1);
             return true;
         }
-        if (key == GLFW.GLFW_KEY_RIGHT) {
+        if (key == InputConstants.KEY_RIGHT) {
             cursorPos = Math.min(editingText.length(), cursorPos + 1);
             return true;
         }
-        if (key == GLFW.GLFW_KEY_HOME) {
+        if (key == InputConstants.KEY_HOME) {
             cursorPos = 0;
             return true;
         }
-        if (key == GLFW.GLFW_KEY_END) {
+        if (key == InputConstants.KEY_END) {
             cursorPos = editingText.length();
             return true;
         }
@@ -522,6 +522,12 @@ public class FranklyNumberInput extends AbstractWidget implements FranklyDepthAw
     @Override
     public void updateWidgetNarration(NarrationElementOutput output) {
         output.add(NarratedElementType.TITLE, createNarrationMessage());
+    }
+
+    @Override
+    public void setFocused(boolean focused) {
+        super.setFocused(focused);
+        Minecraft.getInstance().onTextInputFocusChange(this, focused);
     }
 
     // =========================================================================
