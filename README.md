@@ -29,7 +29,7 @@ re-deriving "how do I draw a slider" or "how do I triangulate a sphere" from scr
 
 | | |
 | --- | --- |
-| Minecraft | 26.2 |
+| Minecraft | 26.2+ |
 | Loader | Fabric Loader ≥ 0.19.3 |
 | Java | 25+ |
 | Fabric API | **Required.** Some functionality (resource reload listeners, keybinding registration, networking) needs Fabric API, not just Fabric Loader. |
